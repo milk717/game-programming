@@ -1,5 +1,9 @@
-// GdiSimpleRectangle.cpp : 단순한 윈도우 응용 프로그램 프레임워크.
-//
+//Direct2D 관련
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
+
 
 #include "stdafx.h"
 #include <tchar.h>
