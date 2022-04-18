@@ -189,3 +189,9 @@ HRESULT DemoApp::OnRender()
 	}
 	return hr;
 }
+
+void DemoApp::OnResize(UINT width, UINT height) {
+	if (m_pRenderTarget) {
+		m_pRenderTarget->Resize(D2D1::SizeU(width, height));
+	}
+}
