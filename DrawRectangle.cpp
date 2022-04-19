@@ -165,6 +165,7 @@ HRESULT DemoApp::OnRender()
 			m_pRenderTarget->DrawLine(D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
 				D2D1::Point2F(static_cast<float>(x), rtSize.height),
 				m_pLightSlateGrayBrush, 0.5f);
+
 		}
 		for (int y = 0; y < height; y += 10) {
 			m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
