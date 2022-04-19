@@ -1,17 +1,39 @@
-#include "DrawRectangle.h"
+ï»¿#include "DrawRectangle.h"
+#include <tchar.h>
 
-DemoApp::DemoApp():	//»ı¼ºÀÚ¿¡¼­ Å¬·¡½º º¯¼ö NULL·Î ÃÊ±âÈ­
+//ì „ì—­ë³€ìˆ˜ ì„ ì–¸
+D2D_POINT_2F currentPosition; // í˜„ì¬ ë§ˆìš°ìŠ¤ ì¢Œí‘œ 
+
+//ë””ë²„ê¹…ìš© í•¨ìˆ˜
+#if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
+#define TRACE TRACE_WIN32
+#pragma warning(disable: 4996)
+void TRACE_WIN32(LPCTSTR lpszFormat, ...) {
+	TCHAR lpszBuffer[0x160]; //buffer size
+	va_list fmtList;
+	va_start(fmtList, lpszFormat);
+	_vstprintf(lpszBuffer, lpszFormat, fmtList);
+	va_end(fmtList);
+	OutputDebugString(lpszBuffer);
+}
+#endif
+
+
+DemoApp::DemoApp():	//ìƒì„±ìì—ì„œ í´ë˜ìŠ¤ ë³€ìˆ˜ NULLë¡œ ì´ˆê¸°í™”
 	m_hwnd(NULL),
 	m_pDirect2dFactory(NULL),
 	m_pRenderTarget(NULL),
 	m_pLightSlateGrayBrush(NULL),
-	m_pCornflowerBlueBrush(NULL)
+	m_pCornflowerBlueBrush(NULL),
+	m_pBlackBrush(NULL),
+	m_pTextFormat(NULL),
+	m_pDWriteFactory(NULL)
 {
 }
 
 DemoApp::~DemoApp() {
-	DiscardDeviceResources();	//¸ğµç ÀåÄ¡ ÀÇÁ¸Àû ÀÚ¿øÀ» ¹İ³³ÇÏ´Â ÇÔ¼ö
-	SAFE_RELEASE(m_pDirect2dFactory);	//ÀåÄ¡ µ¶¸³Àû ÀÚ¿øÀÎ d2d ÆÑÅä¸®µµ ÇÊ¿äÇÏÁö ¾ÊÀ¸¹Ç·Î ¹İ³³
+	DiscardDeviceResources();	//ëª¨ë“  ì¥ì¹˜ ì˜ì¡´ì  ìì›ì„ ë°˜ë‚©í•˜ëŠ” í•¨ìˆ˜
+	SAFE_RELEASE(m_pDirect2dFactory);	//ì¥ì¹˜ ë…ë¦½ì  ìì›ì¸ d2d íŒ©í† ë¦¬ë„ í•„ìš”í•˜ì§€ ì•Šìœ¼ë¯€ë¡œ ë°˜ë‚©
 }
 
 void DemoApp::RunMessageLoop() {
@@ -24,7 +46,7 @@ void DemoApp::RunMessageLoop() {
 	}
 }
 
-//À©µµ¿ì ÃÊ±âÈ­
+//ìœˆë„ìš° ì´ˆê¸°í™”
 HRESULT DemoApp::Initialize(HINSTANCE hInstance) {
 	HRESULT hr = CreateDeviceIndependentResources();
 	if (SUCCEEDED(hr)) {
@@ -52,7 +74,7 @@ HRESULT DemoApp::Initialize(HINSTANCE hInstance) {
 	return hr;
 }
 
-//RunMessageLoop¸¦ ¼øÂ÷ÀûÀ¸·Î È£Ãâ
+//RunMessageLoopë¥¼ ìˆœì°¨ì ìœ¼ë¡œ í˜¸ì¶œ
 int WINAPI WinMain(HINSTANCE hlnstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	if (SUCCEEDED(CoInitialize(NULL))) {
@@ -73,40 +95,70 @@ HRESULT DemoApp::CreateDeviceIndependentResources() {
 	return hr;
 }
 
-//ÀåÄ¡ ÀÇÁ¸Àû ÀÚ¿øµéÀ» »ı¼º
+//ì¥ì¹˜ ì˜ì¡´ì  ìì›ë“¤ì„ ìƒì„±
 HRESULT DemoApp::CreateDeviceResources() {
 	HRESULT hr = S_OK;
 
-	if (!m_pRenderTarget) {	//·»´õÅ¸°ÙÀÌ ÀÌ¹Ì À¯È¿ÇÒ ¶© ½ÇÇà x
+	if (!m_pRenderTarget) {	//ë Œë”íƒ€ê²Ÿì´ ì´ë¯¸ ìœ íš¨í•  ë• ì‹¤í–‰ x
 		RECT rc; GetClientRect(m_hwnd, &rc);
 		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
-		//·£´õÅ¸ÄÏ »ı¼º
+		//ëœë”íƒ€ì¼“ ìƒì„±
 		hr = m_pDirect2dFactory->CreateHwndRenderTarget(
 			D2D1::RenderTargetProperties(),
 			D2D1::HwndRenderTargetProperties(m_hwnd, size),
 			&m_pRenderTarget);
 		if (SUCCEEDED(hr)) {
-			//È¸»ö º×
+			//íšŒìƒ‰ ë¶“
 			hr = m_pRenderTarget->CreateSolidColorBrush(
 				D2D1::ColorF(D2D1::ColorF::LightSlateGray), &m_pLightSlateGrayBrush);
 		}
 		if (SUCCEEDED(hr)) {
-			//ÆÄ¶õ»ö º×
+			//íŒŒë€ìƒ‰ ë¶“
 			hr = m_pRenderTarget->CreateSolidColorBrush(
 				D2D1::ColorF(D2D1::ColorF::CornflowerBlue), &m_pCornflowerBlueBrush);
+		}
+		if (SUCCEEDED(hr)) {
+			//ê²€ì€ìƒ‰ ë¶“
+			hr = m_pRenderTarget->CreateSolidColorBrush(
+				D2D1::ColorF(D2D1::ColorF::Black), &m_pBlackBrush);
+		}
+		//í…ìŠ¤íŠ¸ í¬ë§· ê´€ë ¨
+		if (SUCCEEDED(hr))
+		{
+			hr = DWriteCreateFactory(
+				DWRITE_FACTORY_TYPE_SHARED,
+				__uuidof(IDWriteFactory),
+				reinterpret_cast<IUnknown**>(&m_pDWriteFactory)
+			);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pDWriteFactory->CreateTextFormat(
+				L"Verdana",
+				NULL,
+				DWRITE_FONT_WEIGHT_REGULAR,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				13.0f,
+				L"en-us",
+				&m_pTextFormat
+			);
 		}
 	}
 	return hr;
 }
 
-//¸ğµç ÀåÄ¡ ÀÇÁ¸Àû ÀÚ¿øÀ» ¹İ³³ÇÏ´Â ÇÔ¼ö. ¼Ò¸êÀÚ¿¡¼­ ºÒ·¯¿È.
+//ëª¨ë“  ì¥ì¹˜ ì˜ì¡´ì  ìì›ì„ ë°˜ë‚©í•˜ëŠ” í•¨ìˆ˜. ì†Œë©¸ìì—ì„œ ë¶ˆëŸ¬ì˜´.
 void DemoApp::DiscardDeviceResources() {
 	SAFE_RELEASE(m_pRenderTarget);
 	SAFE_RELEASE(m_pLightSlateGrayBrush);
 	SAFE_RELEASE(m_pCornflowerBlueBrush);
+	SAFE_RELEASE(m_pBlackBrush);
+	SAFE_RELEASE(m_pDWriteFactory);
+	SAFE_RELEASE(m_pTextFormat);
 }
 
-//À©µµ¿ì ¸Ş½ÃÁö Ã³¸®¸¦ À§ÇÑ ÇÔ¼ö
+//ìœˆë„ìš° ë©”ì‹œì§€ ì²˜ë¦¬ë¥¼ ìœ„í•œ í•¨ìˆ˜
 LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 	WPARAM wParam, LPARAM lParam) {
 	LRESULT result = 0;
@@ -123,22 +175,35 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 		if (pDemoApp) {
 			switch (message) {
 				case WM_SIZE:
-				{ UINT width = LOWORD(lParam);
-				UINT height = HIWORD(lParam);
-				pDemoApp->OnResize(width, height);
+				{ 
+					UINT width = LOWORD(lParam);
+					UINT height = HIWORD(lParam);
+					pDemoApp->OnResize(width, height);
 				}
 				result = 0; wasHandled = true; break;
 				case WM_DISPLAYCHANGE :
-				{ InvalidateRect(hWnd, NULL, FALSE);
+				{ 
+					InvalidateRect(hWnd, NULL, FALSE);
 				}
 				result = 0; wasHandled = true; break;
 				case WM_PAINT:
-				{ pDemoApp->OnRender();
-				ValidateRect(hWnd, NULL);
+				{
+					pDemoApp->OnRender();
+					ValidateRect(hWnd, NULL);
+					return 0;
 				}
 				result = 0; wasHandled = true; break;
+				case WM_MOUSEMOVE:
+				{
+					currentPosition.x = LOWORD(lParam);
+					currentPosition.y = HIWORD(lParam);
+					TRACE_WIN32("X = %.2f, Y = %.2f\n",currentPosition.x,currentPosition.y);
+					InvalidateRect(hWnd, NULL, false);
+					return 0;
+				}
 				case WM_DESTROY:
-				{ PostQuitMessage(0);
+				{ 
+					PostQuitMessage(0);
 				}
 				result = 1; wasHandled = true; break;
 			}
@@ -151,13 +216,26 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 
 HRESULT DemoApp::OnRender()
 {
+	/*
+	âœ”ï¸íšŒìƒ‰ ì‚¬ê°í˜• ê·¸ë ¤ì£¼ê¸°(ë†’ì´:ë„ˆë¹„ = 1:4)
+	ë§ˆìš°ìŠ¤ì¢Œí‘œ, íšŒì „ê°, ë²¡í„°ì‚¬ì´ì¦ˆ ë“± í‘œì‹œí•˜ëŠ” ìº¡ì…˜ í…ìŠ¤íŠ¸ ê·¸ë¦¬ê¸°
+	ë§ˆìš°ìŠ¤ ì™¼ìª½ë²„íŠ¼ ëˆŒë¦¬ë©´
+	íšŒìƒ‰ë°•ìŠ¤ ì•ˆì—ì„œ ëˆŒë¦¬ë©´ í•™ìƒì¶”ê°€
+	ìŠ¤íƒ ê¼­ëŒ€ê¸°ì—ì„œ ëˆŒë¦¬ë©´ í•™ìƒì‚­ì œ
+	(ì¼ë‹¨ì€ ìƒìì•ˆì— ê¸€ì”¨ë§ê³  ìƒìë§Œ ê·¸ë ¤ë³´ì)
+	*/
 	HRESULT hr = S_OK;
 	hr = CreateDeviceResources();
-	if (SUCCEEDED(hr)) { // ·»´õÅ¸°ÙÀÌ À¯È¿ÇÔ. 
+
+	//ì°¸ê³ í•œë¶€ë¶„
+	// ë Œë”íƒ€ê²Ÿ ë³€í™˜ì„ í•­ë“± ë³€í™˜ìœ¼ë¡œ ë¦¬ì…‹í•¨.
+	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+	if (SUCCEEDED(hr)) { // ë Œë”íƒ€ê²Ÿì´ ìœ íš¨í•¨. 
 		m_pRenderTarget->BeginDraw();
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
-		/* ±×¸®±â ÇÔ¼öµéÀ» È£Ãâ... ÀÌ ºÎºĞÀº ´ÙÀ½ ÂÊ¿¡ ÀÖÀ½ */
+
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
 		int width = static_cast<int>(rtSize.width);
 		int height = static_cast<int>(rtSize.height);
@@ -170,14 +248,11 @@ HRESULT DemoApp::OnRender()
 			m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
 				D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
 				m_pLightSlateGrayBrush, 0.5f);
-			//È­¸é À§ÂÊ¿¡ »ç°¢ÇüÀ» ±×¸² .
-			D2D1_RECT_F rectangle1 = D2D1::RectF(
-				rtSize.width / 2 - 50.0f, 10.0f,
-				rtSize.width / 2 + 50.0f, 60.0f);
-			m_pRenderTarget->FillRectangle(&rectangle1, m_pLightSlateGrayBrush);
-			hr = m_pRenderTarget->EndDraw();
 		}
-		if (hr == D2DERR_RECREATE_TARGET) { // ·£´õÅ¸°ÙÀ» Àç»ı¼ºÇØ¾ß ÇÔ . 
+		InitRender();	//í™”ë©´ ìœ„ìª½ì— ì‚¬ê°í˜• ê·¸ë¦¬ê³  ê¸€ìí‘œì‹œ
+
+		hr = m_pRenderTarget->EndDraw();
+		if (hr == D2DERR_RECREATE_TARGET) { // ëœë”íƒ€ê²Ÿì„ ì¬ìƒì„±í•´ì•¼ í•¨. 
 			hr = S_OK;
 			DiscardDeviceResources();
 		}
@@ -188,4 +263,26 @@ void DemoApp::OnResize(UINT width, UINT height) {
 	if (m_pRenderTarget) {
 		m_pRenderTarget->Resize(D2D1::SizeU(width, height));
 	}
+}
+
+void DemoApp::InitRender() {
+	D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
+	//í™”ë©´ ìœ„ìª½ì— ì‚¬ê°í˜•ì„ ê·¸ë¦¼ .
+	D2D1_RECT_F rectangle1 = D2D1::RectF(
+		rtSize.width / 2 - 25.0f, 10.0f,
+		rtSize.width / 2 + 25.0f, 35.0f);
+	D2D1_ROUNDED_RECT roundedRect = D2D1::RoundedRect(rectangle1, 10.0f, 10.0f);
+	m_pRenderTarget->DrawRoundedRectangle(&roundedRect, m_pLightSlateGrayBrush);
+	m_pRenderTarget->FillRoundedRectangle(&roundedRect, m_pLightSlateGrayBrush);
+	TRACE_WIN32("ì‚¬ê°í˜• ê·¸ë¦¼");
+
+	//ë§ˆìš°ìŠ¤ ìœ„ì¹˜ ì •ë³´ ë“± í‘œì‹œ
+	// ìº¡ì…˜ í…ìŠ¤íŠ¸ë¥¼ í‘œì‹œí•¨.
+	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+	WCHAR szText[100];
+	_swprintf(szText, L"ë§ˆìš°ìŠ¤ X:%.2f\në§ˆìš°ìŠ¤ Y:%.2f\níšŒì „ê°ë„:%.2f\ní¬ê¸°ì¡°ì • ì¸ì :%.2f\në°•ìŠ¤ê°œìˆ˜ : %d\n",
+		currentPosition.x, currentPosition.y, 0.0,0.0,0);
+	m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat,
+		D2D1::RectF(10.0f, 10.5f, 236.0f, 190.5f), m_pBlackBrush);
+	TRACE_WIN32("ìº¡ì…˜í‘œì‹œ");
 }

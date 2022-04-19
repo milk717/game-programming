@@ -3,11 +3,13 @@
 #include <Windows.h>
 
 //C 런타임 관련 헤더
+#include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
 #include <wchar.h>
 #include <math.h>
+#include<tchar.h>
 
 //DX 관련 헤더
 #include <d2d1.h>
@@ -39,6 +41,8 @@ private:
 	HRESULT OnRender();
 	void OnResize(UINT width, UINT height);	//UINT == unsigned int의 약자
 
+	void InitRender();	//위쪽 상자, 마우스 정보 등 표시하는 함수
+
 	//LPARAM은 포인터 값을 전달할 때 사용.
 	//WPARAM은 핸들 또는 정수를 받아들일 때 주로 사용
 	static LRESULT CALLBACK	WndProc(HWND hWnd, UINT message,
@@ -48,6 +52,13 @@ private:
 	HWND m_hwnd;
 	ID2D1Factory* m_pDirect2dFactory;
 	ID2D1HwndRenderTarget* m_pRenderTarget;
-	ID2D1SolidColorBrush* m_pLightSlateGrayBrush;
+
+	//브러쉬
+	ID2D1SolidColorBrush* m_pLightSlateGrayBrush;	//디폴트 회색상자 그릴 때
 	ID2D1SolidColorBrush* m_pCornflowerBlueBrush;
+	ID2D1SolidColorBrush* m_pBlackBrush;
+
+	//DWrite
+	IDWriteFactory* m_pDWriteFactory;
+	IDWriteTextFormat* m_pTextFormat;
 };
