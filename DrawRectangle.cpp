@@ -1,8 +1,9 @@
 ﻿#include "DrawRectangle.h"
+#include "Student.h"
 #include <tchar.h>
+#include <vector>
 
-//전역변수 선언
-D2D_POINT_2F currentPosition; // 현재 마우스 좌표 
+#define MAX_SIZE 7
 
 //디버깅용 함수
 #if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
@@ -18,6 +19,37 @@ void TRACE_WIN32(LPCTSTR lpszFormat, ...) {
 }
 #endif
 
+using namespace std;
+
+//전역변수 선언
+
+//캡션정보
+D2D_POINT_2F currentPosition; // 현재 움직이고 있는 마우스 좌표
+D2D_POINT_2F clickPosition;	//마지막으로 클릭된 마우스 좌표
+float Angle = 0; // 각도 조절 인자
+float Size = 0; // 사이즈 조절 인자 
+
+//좌표
+int centerX, centerY;
+
+//상자
+D2D1_RECT_F topRectangle;	//맨위에 회색상자
+D2D1_ROUNDED_RECT topRoundedRect;	//회색상자 라운드
+RECT captionRect;
+
+//현재 삽입중인지 삭제중인지 판별
+boolean pushingFlag = false;
+boolean pushedFlag = false;
+boolean popingFlag = false;
+boolean popedFlag = false;
+
+//학생 정보 저장할 벡터
+vector <Student> studentList; //학생 데이터가 담길 벡터
+int studentListSize = 0;	//현재 벡터에 담긴 학생 수
+
+
+//함수선언
+D2D1_RECT_F getTopStackPosition();
 
 DemoApp::DemoApp():	//생성자에서 클래스 변수 NULL로 초기화
 	m_hwnd(NULL),
@@ -193,12 +225,64 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 					return 0;
 				}
 				result = 0; wasHandled = true; break;
-				case WM_MOUSEMOVE:
+				case WM_LBUTTONDOWN:
+				{
+					if(LOWORD(lParam) >= topRectangle.left && LOWORD(lParam) <= topRectangle.right
+						&& HIWORD(lParam) >= topRectangle.top && HIWORD(lParam) <= topRectangle.bottom) { // 만약 상단의 가운데 사각형이 눌려졌으면 
+						pushingFlag = true; // 현재 삽입을 시작했다는 것을 나타낸다.
+						clickPosition.x = LOWORD(lParam);
+						clickPosition.y = HIWORD(lParam);
+						TRACE_WIN32("X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+					}
+					else {
+						/*
+						* top위치에 있는 스택이 눌리면 삭제모드 시작
+						* 그럼 클릭된곳이 top위치인지 알아내야함
+						* top위치 좌표는 스택의 크기로 알 수 있음.
+						* 그럼 스택먼저 구현하자
+						*/
+						//D2D1_RECT_F topRect = 
+						//popingFlag = true; // 현재 삭제를 시작했다는 것을 나타낸다.
+						//clickPosition.x = LOWORD(lParam);
+						//clickPosition.y = HIWORD(lParam);
+						//TRACE_WIN32("X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+					}
+					break;
+				}
+				case WM_MOUSEMOVE:	//마우스 움직일 때: 좌표정보 갱신, 상자 추가, 삭제일 때 구현
 				{
 					currentPosition.x = LOWORD(lParam);
 					currentPosition.y = HIWORD(lParam);
-					TRACE_WIN32("X = %.2f, Y = %.2f\n",currentPosition.x,currentPosition.y);
-					InvalidateRect(hWnd, NULL, false);
+					//TRACE_WIN32("X = %.2f, Y = %.2f\n",currentPosition.x,currentPosition.y);
+					InvalidateRect(hWnd, &captionRect, false);	//캡션 영역만큼 화면 갱신
+				
+					if (pushingFlag) {	//삽입모드일 때(맨위 회색상자에서 클릭되었고 아직 마우스 버튼이 떼지기 전)
+						if (studentListSize >= MAX_SIZE) {	//최대 사이즈보다 더 크면
+							pushingFlag = false; // pushingFlag를 false로 처리해 삽입모드를 벗어난다.
+							::MessageBox(0, "the number of box is 20 , it's limit", "Fatal Error", MB_OK); //에러 메시지 띄워주기
+							::MessageBeep(MB_OK);
+							break;
+						}
+						D2D1_RECT_F topStackRect = getTopStackPosition();		//맨위 스택의 위치정보 가져옴.
+						if (LOWORD(lParam) >= topStackRect.left && LOWORD(lParam) <= topStackRect.right
+							&& HIWORD(lParam) >= topStackRect.top && HIWORD(lParam) <= topStackRect.bottom) { // 삽입모드인 채로 맨 위쪽으로 드래그되었을 경우
+							pushedFlag = true; //삽입이 완료되었다고 처리
+							Angle = 0; //Angle, Size 초기화 
+							Size = 0;
+							pushingFlag = false;
+						}
+						InvalidateRect(hWnd, NULL, false);
+					}
+					else if (popingFlag) {
+						if (LOWORD(lParam) >= topRectangle.left && LOWORD(lParam) <= topRectangle.right
+							&& HIWORD(lParam) >= topRectangle.top && HIWORD(lParam) <= topRectangle.bottom) {  // 삭제모드인채로 상단 회색 박스까지 드래그되었을 경우
+							popedFlag = true; //삭제가 완료되었다고 처리
+							Angle = 0; //Angle,Size 초기화 
+							Size = 0;
+							popingFlag = false;
+						}
+						InvalidateRect(hWnd, NULL, false);
+					}
 					return 0;
 				}
 				case WM_DESTROY:
@@ -218,7 +302,8 @@ HRESULT DemoApp::OnRender()
 {
 	/*
 	✔️회색 사각형 그려주기(높이:너비 = 1:4)
-	마우스좌표, 회전각, 벡터사이즈 등 표시하는 캡션 텍스트 그리기
+	✔️마우스좌표, 
+	회전각, 벡터사이즈 등 표시하는 캡션 텍스트 그리기
 	마우스 왼쪽버튼 눌리면
 	회색박스 안에서 눌리면 학생추가
 	스택 꼭대기에서 눌리면 학생삭제
@@ -227,7 +312,6 @@ HRESULT DemoApp::OnRender()
 	HRESULT hr = S_OK;
 	hr = CreateDeviceResources();
 
-	//참고한부분
 	// 렌더타겟 변환을 항등 변환으로 리셋함.
 	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
@@ -239,6 +323,8 @@ HRESULT DemoApp::OnRender()
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
 		int width = static_cast<int>(rtSize.width);
 		int height = static_cast<int>(rtSize.height);
+		centerX = rtSize.width / 2;
+		centerY = rtSize.height / 2;
 		for (int x = 0; x < width; x += 10) {
 			m_pRenderTarget->DrawLine(D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
 				D2D1::Point2F(static_cast<float>(x), rtSize.height),
@@ -268,21 +354,28 @@ void DemoApp::OnResize(UINT width, UINT height) {
 void DemoApp::InitRender() {
 	D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
 	//화면 위쪽에 사각형을 그림 .
-	D2D1_RECT_F rectangle1 = D2D1::RectF(
+	topRectangle = D2D1::RectF(
 		rtSize.width / 2 - 25.0f, 10.0f,
 		rtSize.width / 2 + 25.0f, 35.0f);
-	D2D1_ROUNDED_RECT roundedRect = D2D1::RoundedRect(rectangle1, 10.0f, 10.0f);
-	m_pRenderTarget->DrawRoundedRectangle(&roundedRect, m_pLightSlateGrayBrush);
-	m_pRenderTarget->FillRoundedRectangle(&roundedRect, m_pLightSlateGrayBrush);
-	TRACE_WIN32("사각형 그림");
+	topRoundedRect = D2D1::RoundedRect(topRectangle, 10.0f, 10.0f);
+	m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pLightSlateGrayBrush);
+	m_pRenderTarget->FillRoundedRectangle(&topRoundedRect, m_pLightSlateGrayBrush);
 
 	//마우스 위치 정보 등 표시
 	// 캡션 텍스트를 표시함.
 	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 	WCHAR szText[100];
 	_swprintf(szText, L"마우스 X:%.2f\n마우스 Y:%.2f\n회전각도:%.2f\n크기조정 인자 :%.2f\n박스개수 : %d\n",
-		currentPosition.x, currentPosition.y, 0.0,0.0,0);
+		currentPosition.x, currentPosition.y, 0.0, 0.0, 0);
 	m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat,
 		D2D1::RectF(10.0f, 10.5f, 236.0f, 190.5f), m_pBlackBrush);
-	TRACE_WIN32("캡션표시");
+	captionRect.left = 10.0;
+	captionRect.top = 10.5;
+	captionRect.right = 236.0;
+	captionRect.bottom = 190.5;
+}
+
+D2D1_RECT_F getTopStackPosition() {	//맨위 추가될 상자의 위치 정보를 계산한는 함수.
+	float top = 870 - 30 * (studentListSize + 2);
+	return D2D1::RectF(centerX - 60, top, centerX + 60, top + 30);
 }

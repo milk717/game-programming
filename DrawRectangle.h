@@ -34,6 +34,7 @@ public:
 	HRESULT Initialize(HINSTANCE hInstance);	//HRESULT == 32bit signed Á¤¼öÇü
 	void RunMessageLoop();
 
+
 private:
 	HRESULT CreateDeviceIndependentResources();
 	HRESULT CreateDeviceResources();
