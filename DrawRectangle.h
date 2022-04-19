@@ -58,6 +58,7 @@ private:
 	ID2D1SolidColorBrush* m_pLightSlateGrayBrush;	//디폴트 회색상자 그릴 때
 	ID2D1SolidColorBrush* m_pCornflowerBlueBrush;
 	ID2D1SolidColorBrush* m_pBlackBrush;
+	ID2D1SolidColorBrush* m_RectangleBrush;
 
 	//DWrite
 	IDWriteFactory* m_pDWriteFactory;

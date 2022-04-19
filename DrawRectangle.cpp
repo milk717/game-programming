@@ -2,6 +2,8 @@
 #include "Student.h"
 #include <tchar.h>
 #include <vector>
+#include <string>
+#include <utility>
 
 #define MAX_SIZE 7
 
@@ -37,6 +39,8 @@ D2D1_RECT_F topRectangle;	//맨위에 회색상자
 D2D1_ROUNDED_RECT topRoundedRect;	//회색상자 라운드
 RECT captionRect;
 
+D2D1_SIZE_F rtSize; //렌더타겟 사이즈
+
 //현재 삽입중인지 삭제중인지 판별
 boolean pushingFlag = false;
 boolean pushedFlag = false;
@@ -44,12 +48,14 @@ boolean popingFlag = false;
 boolean popedFlag = false;
 
 //학생 정보 저장할 벡터
-vector <Student> studentList; //학생 데이터가 담길 벡터
+typedef pair<string, int> student;
+vector <student> studentList; //학생 데이터가 담길 벡터
 int studentListSize = 0;	//현재 벡터에 담긴 학생 수
 
 
 //함수선언
-D2D1_RECT_F getTopStackPosition();
+D2D1_RECT_F getTopStackPosition(int stackSize);
+void dataPush();
 
 DemoApp::DemoApp():	//생성자에서 클래스 변수 NULL로 초기화
 	m_hwnd(NULL),
@@ -59,7 +65,8 @@ DemoApp::DemoApp():	//생성자에서 클래스 변수 NULL로 초기화
 	m_pCornflowerBlueBrush(NULL),
 	m_pBlackBrush(NULL),
 	m_pTextFormat(NULL),
-	m_pDWriteFactory(NULL)
+	m_pDWriteFactory(NULL),
+	m_RectangleBrush(NULL)
 {
 }
 
@@ -91,10 +98,10 @@ HRESULT DemoApp::Initialize(HINSTANCE hInstance) {
 		wcex.hbrBackground = NULL;
 		wcex.lpszMenuName = NULL;
 		wcex.hCursor = LoadCursor(NULL,IDI_APPLICATION);
-		wcex.lpszClassName = "D2DDemoApp";
+		wcex.lpszClassName = L"D2DDemoApp";
 		RegisterClassEx(&wcex);
 		m_hwnd = CreateWindow(
-			"D2DDemoApp", "Direct2D Demo Application", 
+			L"D2DDemoApp", L"Direct2D Demo Application", 
 			WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
 			640, 480, NULL, NULL, HINST_THISCOMPONENT, this);
 		hr = m_hwnd ? S_OK : E_FAIL;
@@ -154,6 +161,11 @@ HRESULT DemoApp::CreateDeviceResources() {
 			hr = m_pRenderTarget->CreateSolidColorBrush(
 				D2D1::ColorF(D2D1::ColorF::Black), &m_pBlackBrush);
 		}
+		if (SUCCEEDED(hr)) {
+			//보라색 붓
+			hr = m_pRenderTarget->CreateSolidColorBrush(
+				D2D1::ColorF(D2D1::ColorF::BlueViolet), &m_RectangleBrush);
+		}
 		//텍스트 포맷 관련
 		if (SUCCEEDED(hr))
 		{
@@ -188,6 +200,7 @@ void DemoApp::DiscardDeviceResources() {
 	SAFE_RELEASE(m_pBlackBrush);
 	SAFE_RELEASE(m_pDWriteFactory);
 	SAFE_RELEASE(m_pTextFormat);
+	SAFE_RELEASE(m_RectangleBrush);
 }
 
 //윈도우 메시지 처리를 위한 함수
@@ -224,6 +237,15 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 					ValidateRect(hWnd, NULL);
 					return 0;
 				}
+				case WM_LBUTTONUP: //드래그가 끊겼을 때
+				{
+					pushingFlag = false; 
+					popingFlag = false;
+					Angle = 0; // Angle,Size값 초기화
+					Size = 0;
+					break;
+
+				}
 				result = 0; wasHandled = true; break;
 				case WM_LBUTTONDOWN:
 				{
@@ -232,7 +254,8 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 						pushingFlag = true; // 현재 삽입을 시작했다는 것을 나타낸다.
 						clickPosition.x = LOWORD(lParam);
 						clickPosition.y = HIWORD(lParam);
-						TRACE_WIN32("X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+						TRACE_WIN32(L"X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+						TRACE_WIN32(L"pushing student start\n");
 					}
 					else {
 						/*
@@ -241,11 +264,19 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 						* top위치 좌표는 스택의 크기로 알 수 있음.
 						* 그럼 스택먼저 구현하자
 						*/
-						//D2D1_RECT_F topRect = 
-						//popingFlag = true; // 현재 삭제를 시작했다는 것을 나타낸다.
-						//clickPosition.x = LOWORD(lParam);
-						//clickPosition.y = HIWORD(lParam);
-						//TRACE_WIN32("X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+						if (studentListSize == 0) {
+							break;
+						}
+						D2D1_RECT_F topRect = getTopStackPosition(studentListSize);
+						if (LOWORD(lParam) >= topRect.left && LOWORD(lParam) <= topRect.right
+							&& HIWORD(lParam) >= topRect.top && HIWORD(lParam) <= topRect.bottom) {  // 삭제모드인채로 상단 회색 박스까지 드래그되었을 경우
+							popingFlag = true; // 현재 삭제를 시작했다는 것을 나타낸다.
+							clickPosition.x = LOWORD(lParam);
+							clickPosition.y = HIWORD(lParam);
+							TRACE_WIN32(L"X = %.2f, Y = %.2f\n", clickPosition.x, clickPosition.y);
+							TRACE_WIN32(L"poping student start\n");
+						}
+						
 					}
 					break;
 				}
@@ -259,17 +290,19 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 					if (pushingFlag) {	//삽입모드일 때(맨위 회색상자에서 클릭되었고 아직 마우스 버튼이 떼지기 전)
 						if (studentListSize >= MAX_SIZE) {	//최대 사이즈보다 더 크면
 							pushingFlag = false; // pushingFlag를 false로 처리해 삽입모드를 벗어난다.
-							::MessageBox(0, "the number of box is 20 , it's limit", "Fatal Error", MB_OK); //에러 메시지 띄워주기
+							::MessageBox(0, L"the number of box is 7 , it's limit", L"Fatal Error", MB_OK); //에러 메시지 띄워주기
 							::MessageBeep(MB_OK);
 							break;
 						}
-						D2D1_RECT_F topStackRect = getTopStackPosition();		//맨위 스택의 위치정보 가져옴.
-						if (LOWORD(lParam) >= topStackRect.left && LOWORD(lParam) <= topStackRect.right
-							&& HIWORD(lParam) >= topStackRect.top && HIWORD(lParam) <= topStackRect.bottom) { // 삽입모드인 채로 맨 위쪽으로 드래그되었을 경우
+						D2D1_RECT_F topRect = getTopStackPosition(studentListSize);		//맨위 스택의 위치정보 가져옴.
+						//TRACE_WIN32("get top stack position (%f, %f)\n(%f, %f)\n",topStackRect.left,topStackRect.top,topStackRect.right,topStackRect.bottom);
+						if (LOWORD(lParam) >= topRect.left && LOWORD(lParam) <= topRect.right
+							&& HIWORD(lParam) >= topRect.top && HIWORD(lParam) <= topRect.bottom) { // 삽입모드인 채로 맨 위쪽으로 드래그되었을 경우
 							pushedFlag = true; //삽입이 완료되었다고 처리
 							Angle = 0; //Angle, Size 초기화 
 							Size = 0;
 							pushingFlag = false;
+							TRACE_WIN32(L"pushing student complete\n");
 						}
 						InvalidateRect(hWnd, NULL, false);
 					}
@@ -280,6 +313,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 							Angle = 0; //Angle,Size 초기화 
 							Size = 0;
 							popingFlag = false;
+							TRACE_WIN32(L"poping student complete\n");
 						}
 						InvalidateRect(hWnd, NULL, false);
 					}
@@ -320,23 +354,35 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
-		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
-		int width = static_cast<int>(rtSize.width);
-		int height = static_cast<int>(rtSize.height);
-		centerX = rtSize.width / 2;
-		centerY = rtSize.height / 2;
-		for (int x = 0; x < width; x += 10) {
-			m_pRenderTarget->DrawLine(D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
-				D2D1::Point2F(static_cast<float>(x), rtSize.height),
-				m_pLightSlateGrayBrush, 0.5f);
-		}
-		for (int y = 0; y < height; y += 10) {
-			m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
-				D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
-				m_pLightSlateGrayBrush, 0.5f);
-		}
-		InitRender();	//화면 위쪽에 사각형 그리고 글자표시
+		rtSize = m_pRenderTarget->GetSize();
+		
+		InitRender();	//화면 위쪽에 사각형 그리고 글자표시 격자
 
+		//현재 스택 그려주기
+		for (int i = 0; i < studentListSize; i++) { // v에 저장된 스택을 그려준다. 
+			if (popingFlag == true || popedFlag == true) {	//삭제모드일때는 맨위스택 안그려줌
+				if (i + 1 == studentListSize) break;
+			}
+			m_pRenderTarget->FillRectangle(getTopStackPosition(i), m_RectangleBrush); // 그다음 그려질 스택 위치를 얻어내서 사각형을 그려준다. 
+			const char* multiByte = studentList[i].first.c_str(); // v[i].name을 const char*형으로 바꾼다. 
+			TCHAR temp[15]; // const char*을 TCHAR형으로 바꿔야 하기 때문에 temp변수를 선언한다. 
+			memset(temp, 0, sizeof(temp));
+			MultiByteToWideChar(CP_ACP, MB_COMPOSITE, multiByte, -1, temp, 15);
+			static WCHAR szText[100]; // name과 점수를 한번에 넣어아 햐므로 WCHAR 배열형 변수를 선언한다. 
+			swprintf_s(szText, L"%s %d\n", temp, studentList[i].second);
+			m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat, getTopStackPosition(i), m_pBlackBrush); // Text를 그려준다.
+			m_pRenderTarget->DrawRectangle(getTopStackPosition(i), m_pBlackBrush); // 상자 테두리를 그려준다. 
+		}
+		if (pushedFlag == true) { // 삽입 완료됬으면 
+			studentListSize++; // 스택사이즈를 늘려준다. 
+			dataPush(); // 벡터에 data를 넣어준다. 
+			pushedFlag = false;
+		}
+		if (popedFlag == true) { // 삭제되었으면
+			studentListSize--; //stacksize를 줄여준다.
+			studentList.pop_back(); // 벡터에서 값을 빼온다. 
+			popedFlag = false;
+		}
 		hr = m_pRenderTarget->EndDraw();
 		if (hr == D2DERR_RECREATE_TARGET) { // 랜더타겟을 재생성해야 함. 
 			hr = S_OK;
@@ -352,11 +398,25 @@ void DemoApp::OnResize(UINT width, UINT height) {
 }
 
 void DemoApp::InitRender() {
-	D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
+	int width = static_cast<int>(rtSize.width);
+	int height = static_cast<int>(rtSize.height);
+	centerX = width / 2;
+	centerY = height / 2;
+	m_pLightSlateGrayBrush->SetOpacity(0.5f);
+	for (int x = 0; x < width; x += 10) {
+		m_pRenderTarget->DrawLine(D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
+			D2D1::Point2F(static_cast<float>(x), rtSize.height),
+			m_pLightSlateGrayBrush, 0.5f);
+	}
+	for (int y = 0; y < height; y += 10) {
+		m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
+			D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
+			m_pLightSlateGrayBrush, 0.5f);
+	}
 	//화면 위쪽에 사각형을 그림 .
 	topRectangle = D2D1::RectF(
-		rtSize.width / 2 - 25.0f, 10.0f,
-		rtSize.width / 2 + 25.0f, 35.0f);
+		centerX - 25.0f, 10.0f,
+		centerX + 25.0f, 35.0f);
 	topRoundedRect = D2D1::RoundedRect(topRectangle, 10.0f, 10.0f);
 	m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pLightSlateGrayBrush);
 	m_pRenderTarget->FillRoundedRectangle(&topRoundedRect, m_pLightSlateGrayBrush);
@@ -375,7 +435,12 @@ void DemoApp::InitRender() {
 	captionRect.bottom = 190.5;
 }
 
-D2D1_RECT_F getTopStackPosition() {	//맨위 추가될 상자의 위치 정보를 계산한는 함수.
-	float top = 870 - 30 * (studentListSize + 2);
-	return D2D1::RectF(centerX - 60, top, centerX + 60, top + 30);
+D2D1_RECT_F getTopStackPosition(int stackSize) {	//맨위 추가될 상자의 위치 정보를 계산한는 함수. 5236-1207-1341-5850 0324
+	float top = rtSize.height - ((stackSize +1) * 30.0f);
+	return D2D1::RectF(centerX - 50, top, centerX + 50, top + 30);
+}
+
+void dataPush() {
+	Student st = Student();
+	studentList.push_back(student(st.getName(), st.getScore()));
 }
