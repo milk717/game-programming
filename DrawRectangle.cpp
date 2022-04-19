@@ -170,16 +170,11 @@ HRESULT DemoApp::OnRender()
 			m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
 				D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
 				m_pLightSlateGrayBrush, 0.5f);
-			//화면 중간에 두 사각형을 그림 .
+			//화면 위쪽에 사각형을 그림 .
 			D2D1_RECT_F rectangle1 = D2D1::RectF(
-				rtSize.width / 2 - 50.0f, rtSize.height / 2 - 50.0f,
-				rtSize.width / 2 + 50.0f, rtSize.height / 2 + 50.0f);
-			D2D1_RECT_F rectangle2 = D2D1::RectF(
-				rtSize.width / 2 - 100.0f, rtSize.height / 2 - 100.0f,
-				rtSize.width / 2 + 100.0f, rtSize.height / 2 + 100.0f);
+				rtSize.width / 2 - 50.0f, 10.0f,
+				rtSize.width / 2 + 50.0f, 60.0f);
 			m_pRenderTarget->FillRectangle(&rectangle1, m_pLightSlateGrayBrush);
-			m_pRenderTarget->DrawRectangle(&rectangle2, m_pCornflowerBlueBrush);
-
 			hr = m_pRenderTarget->EndDraw();
 		}
 		if (hr == D2DERR_RECREATE_TARGET) { // 랜더타겟을 재생성해야 함 . 
@@ -188,4 +183,9 @@ HRESULT DemoApp::OnRender()
 		}
 	}
 	return hr;
+}
+void DemoApp::OnResize(UINT width, UINT height) {
+	if (m_pRenderTarget) {
+		m_pRenderTarget->Resize(D2D1::SizeU(width, height));
+	}
 }
