@@ -336,7 +336,7 @@ HRESULT DemoApp::OnRender()
 {
 	/*
 	✔️회색 사각형 그려주기(높이:너비 = 1:4)
-	✔️마우스좌표, 
+	✔️마우스좌표,
 	회전각, 벡터사이즈 등 표시하는 캡션 텍스트 그리기
 	마우스 왼쪽버튼 눌리면
 	회색박스 안에서 눌리면 학생추가
@@ -353,44 +353,69 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->BeginDraw();
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
+		int width = static_cast<int>(rtSize.width);
+		int height = static_cast<int>(rtSize.height);
+		for (int x = 0; x < width; x += 10) {
+			m_pRenderTarget->DrawLine(D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
+				D2D1::Point2F(static_cast<float>(x), rtSize.height),
+				m_pLightSlateGrayBrush, 0.5f);
 
-		rtSize = m_pRenderTarget->GetSize();
-		
-		InitRender();	//화면 위쪽에 사각형 그리고 글자표시 격자
+		}
+		for (int y = 0; y < height; y += 10) {
+			m_pRenderTarget->DrawLine(D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
+				D2D1::Point2F(rtSize.width, static_cast<FLOAT>(y)),
+				m_pLightSlateGrayBrush, 0.5f);
+			//ȭ�� �߰��� �� �簢���� �׸� .
+			D2D1_RECT_F rectangle1 = D2D1::RectF(
+				rtSize.width / 2 - 50.0f, rtSize.height / 2 - 50.0f,
+				rtSize.width / 2 + 50.0f, rtSize.height / 2 + 50.0f);
+			D2D1_RECT_F rectangle2 = D2D1::RectF(
+				rtSize.width / 2 - 100.0f, rtSize.height / 2 - 100.0f,
+				rtSize.width / 2 + 100.0f, rtSize.height / 2 + 100.0f);
+			m_pRenderTarget->FillRectangle(&rectangle1, m_pLightSlateGrayBrush);
+			m_pRenderTarget->DrawRectangle(&rectangle2, m_pCornflowerBlueBrush);
 
-		//현재 스택 그려주기
-		for (int i = 0; i < studentListSize; i++) { // v에 저장된 스택을 그려준다. 
-			if (popingFlag == true || popedFlag == true) {	//삭제모드일때는 맨위스택 안그려줌
-				if (i + 1 == studentListSize) break;
+
+			rtSize = m_pRenderTarget->GetSize();
+
+			InitRender();	//화면 위쪽에 사각형 그리고 글자표시 격자
+
+			//현재 스택 그려주기
+			for (int i = 0; i < studentListSize; i++) { // v에 저장된 스택을 그려준다. 
+				if (popingFlag == true || popedFlag == true) {	//삭제모드일때는 맨위스택 안그려줌
+					if (i + 1 == studentListSize) break;
+				}
+				m_pRenderTarget->FillRectangle(getTopStackPosition(i), m_RectangleBrush); // 그다음 그려질 스택 위치를 얻어내서 사각형을 그려준다. 
+				const char* multiByte = studentList[i].first.c_str(); // v[i].name을 const char*형으로 바꾼다. 
+				TCHAR temp[15]; // const char*을 TCHAR형으로 바꿔야 하기 때문에 temp변수를 선언한다. 
+				memset(temp, 0, sizeof(temp));
+				MultiByteToWideChar(CP_ACP, MB_COMPOSITE, multiByte, -1, temp, 15);
+				static WCHAR szText[100]; // name과 점수를 한번에 넣어아 햐므로 WCHAR 배열형 변수를 선언한다. 
+				swprintf_s(szText, L"%s %d\n", temp, studentList[i].second);
+				m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat, getTopStackPosition(i), m_pBlackBrush); // Text를 그려준다.
+				m_pRenderTarget->DrawRectangle(getTopStackPosition(i), m_pBlackBrush); // 상자 테두리를 그려준다. 
 			}
-			m_pRenderTarget->FillRectangle(getTopStackPosition(i), m_RectangleBrush); // 그다음 그려질 스택 위치를 얻어내서 사각형을 그려준다. 
-			const char* multiByte = studentList[i].first.c_str(); // v[i].name을 const char*형으로 바꾼다. 
-			TCHAR temp[15]; // const char*을 TCHAR형으로 바꿔야 하기 때문에 temp변수를 선언한다. 
-			memset(temp, 0, sizeof(temp));
-			MultiByteToWideChar(CP_ACP, MB_COMPOSITE, multiByte, -1, temp, 15);
-			static WCHAR szText[100]; // name과 점수를 한번에 넣어아 햐므로 WCHAR 배열형 변수를 선언한다. 
-			swprintf_s(szText, L"%s %d\n", temp, studentList[i].second);
-			m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat, getTopStackPosition(i), m_pBlackBrush); // Text를 그려준다.
-			m_pRenderTarget->DrawRectangle(getTopStackPosition(i), m_pBlackBrush); // 상자 테두리를 그려준다. 
+			if (pushedFlag == true) { // 삽입 완료됬으면 
+				studentListSize++; // 스택사이즈를 늘려준다. 
+				dataPush(); // 벡터에 data를 넣어준다. 
+				pushedFlag = false;
+			}
+			if (popedFlag == true) { // 삭제되었으면
+				studentListSize--; //stacksize를 줄여준다.
+				studentList.pop_back(); // 벡터에서 값을 빼온다. 
+				popedFlag = false;
+			}
+			hr = m_pRenderTarget->EndDraw();
+			if (hr == D2DERR_RECREATE_TARGET) { // 랜더타겟을 재생성해야 함. 
+				hr = S_OK;
+				DiscardDeviceResources();
+			}
 		}
-		if (pushedFlag == true) { // 삽입 완료됬으면 
-			studentListSize++; // 스택사이즈를 늘려준다. 
-			dataPush(); // 벡터에 data를 넣어준다. 
-			pushedFlag = false;
-		}
-		if (popedFlag == true) { // 삭제되었으면
-			studentListSize--; //stacksize를 줄여준다.
-			studentList.pop_back(); // 벡터에서 값을 빼온다. 
-			popedFlag = false;
-		}
-		hr = m_pRenderTarget->EndDraw();
-		if (hr == D2DERR_RECREATE_TARGET) { // 랜더타겟을 재생성해야 함. 
-			hr = S_OK;
-			DiscardDeviceResources();
-		}
+		return hr;
 	}
-	return hr;
 }
+
 void DemoApp::OnResize(UINT width, UINT height) {
 	if (m_pRenderTarget) {
 		m_pRenderTarget->Resize(D2D1::SizeU(width, height));
