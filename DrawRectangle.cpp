@@ -267,7 +267,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 						if (studentListSize == 0) {
 							break;
 						}
-						D2D1_RECT_F topRect = getTopStackPosition(studentListSize);
+						D2D1_RECT_F topRect = getTopStackPosition(studentListSize-1);	//새로 추가될 상자의 위치가 아니라 맨위 상자니까 사이즈 하나 줄여서 전달
 						if (LOWORD(lParam) >= topRect.left && LOWORD(lParam) <= topRect.right
 							&& HIWORD(lParam) >= topRect.top && HIWORD(lParam) <= topRect.bottom) {  // 삭제모드인채로 상단 회색 박스까지 드래그되었을 경우
 							popingFlag = true; // 현재 삭제를 시작했다는 것을 나타낸다.
@@ -331,7 +331,9 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hWnd, UINT message,
 	}
 	return result;
 }
-
+bool cmp(student a, student b) {
+	return a.second > b.second;
+}
 HRESULT DemoApp::OnRender()
 {
 	/*
@@ -357,31 +359,48 @@ HRESULT DemoApp::OnRender()
 		rtSize = m_pRenderTarget->GetSize();
 		
 		InitRender();	//화면 위쪽에 사각형 그리고 글자표시 격자
-
-		//현재 스택 그려주기
-		for (int i = 0; i < studentListSize; i++) { // v에 저장된 스택을 그려준다. 
-			if (popingFlag == true || popedFlag == true) {	//삭제모드일때는 맨위스택 안그려줌
-				if (i + 1 == studentListSize) break;
+		//studentList를 그려주기 전에 성적순으로 정렬하기 (맨위가 젤 낮은성적)
+		sort(studentList.begin(), studentList.end(),cmp);
+		//현재 벡터 그려주기
+		for (int i = 0; i < studentListSize; i++) { // studentList에 저장된 스택을 그려준다. 
+			if (popingFlag == true || popedFlag == true) {	//삭제모드일때는 
+				if (i + 1 == studentListSize) break;	//맨위스택 안그려줌
 			}
-			m_pRenderTarget->FillRectangle(getTopStackPosition(i), m_RectangleBrush); // 그다음 그려질 스택 위치를 얻어내서 사각형을 그려준다. 
-			const char* multiByte = studentList[i].first.c_str(); // v[i].name을 const char*형으로 바꾼다. 
+			topRoundedRect = D2D1::RoundedRect(getTopStackPosition(i), 10.0f, 10.0f);
+			m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush);
+			m_pRenderTarget->FillRoundedRectangle(topRoundedRect, m_RectangleBrush); //사각형의 예비 위치를 얻어내서 사각형을 그려줌
+			const char* multiByte = studentList[i].first.c_str(); // studentList.first == name 을 const char*형으로 바꾼다. 
 			TCHAR temp[15]; // const char*을 TCHAR형으로 바꿔야 하기 때문에 temp변수를 선언한다. 
 			memset(temp, 0, sizeof(temp));
 			MultiByteToWideChar(CP_ACP, MB_COMPOSITE, multiByte, -1, temp, 15);
-			static WCHAR szText[100]; // name과 점수를 한번에 넣어아 햐므로 WCHAR 배열형 변수를 선언한다. 
-			swprintf_s(szText, L"%s %d\n", temp, studentList[i].second);
+			static WCHAR szText[100]; // name과 score을 한번에 넣어아 햐므로 WCHAR 배열형 변수를 선언한다. 
+			swprintf_s(szText, L"%s %d\n", temp, studentList[i].second);	//상자에 텍스트 표시하기 위한 문자열
 			m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat, getTopStackPosition(i), m_pBlackBrush); // Text를 그려준다.
-			m_pRenderTarget->DrawRectangle(getTopStackPosition(i), m_pBlackBrush); // 상자 테두리를 그려준다. 
+			m_pRenderTarget->DrawRoundedRectangle(topRoundedRect, m_pBlackBrush); // 상자 테두리를 그려준다. 
 		}
+		//삽입되고있는 과정. 애니메이션 처리해야함
+		if (pushingFlag) {
+			drawPusingBoxAnimation();
+			m_pCornflowerBlueBrush->SetOpacity(1.0f);	//투명도 조절
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());	//이거 안하면 가이드라인 돌아감.
+			topRoundedRect = D2D1::RoundedRect(getTopStackPosition(studentListSize), 10.0f, 10.0f);	//가이드라인 상자
+			m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush);
+		}
+		//삭제되고 있는 과정. 애니메이션 처리해야함
+		if (popingFlag) {
+			drawPopingBoxAnimaion();
+		}
+		//맨위 회색 상자에서 드래그 시작해서 스택 맨위에서 드래그 멈췄을 때
 		if (pushedFlag == true) { // 삽입 완료됬으면 
 			studentListSize++; // 스택사이즈를 늘려준다. 
-			dataPush(); // 벡터에 data를 넣어준다. 
-			pushedFlag = false;
+			dataPush(); // 학생 정보를 studentList에 넣어준다
+			pushedFlag = false;	//삽입 완료모드 벗어남
 		}
+		//리스트 맨위 상자에서 드래그 시작해서 맨위 회색 상자에서 드래그 멈췄을 때
 		if (popedFlag == true) { // 삭제되었으면
 			studentListSize--; //stacksize를 줄여준다.
-			studentList.pop_back(); // 벡터에서 값을 빼온다. 
-			popedFlag = false;
+			studentList.pop_back(); // studentList에서 값을 빼온다
+			popedFlag = false;		//삭제 완료모드 벗어남
 		}
 		hr = m_pRenderTarget->EndDraw();
 		if (hr == D2DERR_RECREATE_TARGET) { // 랜더타겟을 재생성해야 함. 
@@ -426,7 +445,7 @@ void DemoApp::InitRender() {
 	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 	WCHAR szText[100];
 	_swprintf(szText, L"마우스 X:%.2f\n마우스 Y:%.2f\n회전각도:%.2f\n크기조정 인자 :%.2f\n박스개수 : %d\n",
-		currentPosition.x, currentPosition.y, 0.0, 0.0, 0);
+		currentPosition.x, currentPosition.y, Angle, Size, studentListSize);
 	m_pRenderTarget->DrawText(szText, wcslen(szText), m_pTextFormat,
 		D2D1::RectF(10.0f, 10.5f, 236.0f, 190.5f), m_pBlackBrush);
 	captionRect.left = 10.0;
@@ -434,8 +453,40 @@ void DemoApp::InitRender() {
 	captionRect.right = 236.0;
 	captionRect.bottom = 190.5;
 }
+//상자 삽입 애니메이션
+void DemoApp::drawPusingBoxAnimation() {
+	D2D1_MATRIX_3X2_F translation = D2D1::Matrix3x2F::Translation(currentPosition.x - clickPosition.x, currentPosition.y - clickPosition.y); //가장 최근에 눌린 곳의 좌표부터 현재 마우스 커서의 위치까지 이동
+	Size = ((currentPosition.y - clickPosition.y) / (getTopStackPosition(studentListSize).top - 30)) + 1; // 목표 지점을 기준으로 size구함
+	D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(Size, 1.0f), D2D1::Point2F(topRectangle.left, topRectangle.top));
+	Angle = (currentPosition.y - clickPosition.y) / (getTopStackPosition(studentListSize).top - 30) * -360; // 목표지점까지 기준으로 회전각 구함. 반시계방향이니까 -360
+	D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(Angle, D2D1::Point2F((topRectangle.right + topRectangle.left) / 2, (topRectangle.top + topRectangle.bottom) / 2));
+	m_pRenderTarget->SetTransform(scale * rotation * translation); // scale->rotation->translation 순
 
-D2D1_RECT_F getTopStackPosition(int stackSize) {	//맨위 추가될 상자의 위치 정보를 계산한는 함수. 5236-1207-1341-5850 0324
+	m_pCornflowerBlueBrush->SetOpacity(0.5f);	//투명도 조절
+	topRoundedRect = D2D1::RoundedRect(topRectangle, 10.0f, 10.0f);
+	m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush);
+	m_pRenderTarget->FillRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush); //topRectangle을 활용해서 모서리둥근사각형으로 바꿔서 그려줌
+}
+//상자 삭제 애니메이션
+void DemoApp::drawPopingBoxAnimaion() {
+	studentListSize--;
+	D2D1_MATRIX_3X2_F translation = D2D1::Matrix3x2F::Translation(currentPosition.x - clickPosition.x, currentPosition.y - clickPosition.y); //가장 최근에 눌린 곳의 좌표부터 현재 마우스 커서의 위치까지 이동
+	if (currentPosition.y <= clickPosition.y) //스택리스트 위쪽으로 드래그
+		Size = (getTopStackPosition(studentListSize).top - 30) / ((clickPosition.y - currentPosition.y)  + (getTopStackPosition(studentListSize).top - 30)); // 목표 지점을 기준으로 size구함
+	else //스택리스트쪽으로 드래그
+		Size = ((currentPosition.y - clickPosition.y) / (getTopStackPosition(studentListSize).top - 30))  + 1; //pushing할때 공식 재사용
+	D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(Size, 1.0f), D2D1::Point2F(clickPosition.x, clickPosition.y));
+	Angle = (clickPosition.y - currentPosition.y) / (getTopStackPosition(studentListSize).top - 30) * 360 * 1; //회전각 구함
+	D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(Angle, D2D1::Point2F(clickPosition.x, clickPosition.y));
+	m_pRenderTarget->SetTransform(scale * rotation * translation);
+	m_pCornflowerBlueBrush->SetOpacity(0.5f);	//투명도 조절
+	topRoundedRect = D2D1::RoundedRect(getTopStackPosition(studentListSize), 10.0f, 10.0f);	// 가장 위쪽 스택을 기준으로 그려줌
+	m_pRenderTarget->DrawRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush);
+	m_pRenderTarget->FillRoundedRectangle(&topRoundedRect, m_pCornflowerBlueBrush); 
+	studentListSize++;
+}
+
+D2D1_RECT_F getTopStackPosition(int stackSize) {	//맨위 추가될 상자의 위치 정보를 계산한는 함수.
 	float top = rtSize.height - ((stackSize +1) * 30.0f);
 	return D2D1::RectF(centerX - 50, top, centerX + 50, top + 30);
 }

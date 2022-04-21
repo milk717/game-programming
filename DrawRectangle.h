@@ -43,6 +43,8 @@ private:
 	void OnResize(UINT width, UINT height);	//UINT == unsigned int의 약자
 
 	void InitRender();	//위쪽 상자, 마우스 정보 등 표시하는 함수
+	void drawPusingBoxAnimation(); //상자가 삽입되는 동안의 애니메이션 처리 함수
+	void drawPopingBoxAnimaion();	//상자가 삭제되는 동안의 애니메이션 처리 함수
 
 	//LPARAM은 포인터 값을 전달할 때 사용.
 	//WPARAM은 핸들 또는 정수를 받아들일 때 주로 사용
@@ -56,7 +58,7 @@ private:
 
 	//브러쉬
 	ID2D1SolidColorBrush* m_pLightSlateGrayBrush;	//디폴트 회색상자 그릴 때
-	ID2D1SolidColorBrush* m_pCornflowerBlueBrush;
+	ID2D1SolidColorBrush* m_pCornflowerBlueBrush;	//추가되고있는 상자
 	ID2D1SolidColorBrush* m_pBlackBrush;
 	ID2D1SolidColorBrush* m_RectangleBrush;
 
