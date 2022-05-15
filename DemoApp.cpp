@@ -43,9 +43,15 @@ DemoApp::DemoApp() :
 	m_pObjectGeometry(NULL),
 	m_pRedBrush(NULL),
 	m_pYellowBrush(NULL),
+
+	//비트맵
 	m_pBitmap(NULL),
-	m_pGridPatternBitmapBrush(NULL),
 	m_pCharactorBitmap(NULL),
+
+	//비트맵 브러쉬
+	m_pBackgroundBitmapBrush(NULL),
+	m_pGridPatternBitmapBrush(NULL),
+	m_pCharactorBitmapBrush(NULL),
 
 	m_Animation()
 {
@@ -60,8 +66,15 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pObjectGeometry);
 	SAFE_RELEASE(m_pRedBrush);
 	SAFE_RELEASE(m_pYellowBrush);
-	SAFE_RELEASE(m_pGridPatternBitmapBrush);;
+	
 	SAFE_RELEASE(m_pBitmap);
+
+	//비트맵 브러쉬
+	SAFE_RELEASE(m_pGridPatternBitmapBrush);
+	SAFE_RELEASE(m_pCharactorBitmapBrush);
+	SAFE_RELEASE(m_pBackgroundBitmapBrush);
+
+
 	SAFE_RELEASE(m_pCharactorBitmap);
 
 
@@ -219,18 +232,33 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_pYellowBrush);
 		}
+
+		/*
+		* 비트맵 객체 생성
+		*/
 		if (SUCCEEDED(hr))
 		{
-			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"background", L"Image", 200, 0, &m_pBitmap);
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"background", L"Image", size.width, size.height, &m_pBitmap);
 		}//배경 비트맵 객체 생성
 
 		if (SUCCEEDED(hr)) {
-			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"charactor", L"Image", 200, 0, &m_pCharactorBitmap);
-		}
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"charactor", L"Image", 100, 100, &m_pCharactorBitmap);
+		}//미니언 비트맵 객체 생성
 
+		/*
+		* 비트맵 브러쉬 생성
+		*/
 		if (SUCCEEDED(hr))
 		{
 			hr = CreateGridPatternBrush(m_pRenderTarget, &m_pGridPatternBitmapBrush);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pRenderTarget->CreateBitmapBrush(m_pBitmap, &m_pBackgroundBitmapBrush);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pRenderTarget->CreateBitmapBrush(m_pCharactorBitmap, &m_pCharactorBitmapBrush);
 		}
 	}
 
@@ -242,6 +270,8 @@ void DemoApp::DiscardDeviceResources()
 	SAFE_RELEASE(m_pRenderTarget);
 	SAFE_RELEASE(m_pRedBrush);
 	SAFE_RELEASE(m_pYellowBrush);
+	SAFE_RELEASE(m_pBitmap);
+	SAFE_RELEASE(m_pCharactorBitmap);
 }
 
 void DemoApp::RunMessageLoop()
@@ -282,11 +312,14 @@ HRESULT DemoApp::OnRender()
 		// 렌더타겟을 클리어함.
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
-		DrawBackground(rtSize);
+		//배경 그리기
+		D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 100, 100);
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
+		//미니언 그리는 순간 애니메이션 적용 안됨,,, 왜??
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, rtSize.height / 1.85);
-		// 비트맵 m_pBitmap을 그림.
+		//비트맵 m_pBitmap을 그림.
 		m_pRenderTarget->DrawBitmap(
 			m_pCharactorBitmap,
 			D2D1::RectF(
@@ -296,12 +329,6 @@ HRESULT DemoApp::OnRender()
 				leftGround.y + rtSize.height / size.height * 40),
 			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
 		);
-
-		// 이동 동선 기하 경로가 화면 중심에 그려지도록 함.
-		m_pRenderTarget->SetTransform(scale * translation);
-
-		// 이동 동선을 붉은색으로 그림.
-		m_pRenderTarget->DrawGeometry(m_pPathGeometry, m_pRedBrush);
 
 		static float anim_time = 0.0f;
 
@@ -321,7 +348,6 @@ HRESULT DemoApp::OnRender()
 		// 삼각형을 노란색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
 		
-
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
 
@@ -433,26 +459,6 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 	return result;
 }
 
-void DemoApp::DrawBackground(D2D1_SIZE_F renderTargetSize) {
-
-	// 격자 패턴으로 배경을 칠함.
-	m_pRenderTarget->FillRectangle(D2D1::RectF(0.0f, 0.0f, renderTargetSize.width, renderTargetSize.height), m_pGridPatternBitmapBrush);
-
-	//배경 그리기
-	D2D1_POINT_2F upperLeftCorner = D2D1::Point2F(0.f, 0.f);
-	// 비트맵 m_pBitmap을 그림.
-	m_pRenderTarget->DrawBitmap(
-		m_pBitmap,
-		D2D1::RectF(
-			upperLeftCorner.x,
-			upperLeftCorner.y,
-			upperLeftCorner.x + renderTargetSize.width,
-			upperLeftCorner.y + renderTargetSize.height),
-		0.5,
-		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-	);
-}
-
 HRESULT DemoApp::CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, ID2D1BitmapBrush** ppBitmapBrush)
 {
 	HRESULT hr = S_OK;
@@ -494,6 +500,7 @@ HRESULT DemoApp::CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, ID2D1B
 
 	return hr;
 }   //배경 격자
+
 // Creates a Direct2D bitmap from a resource in the application resource file.
 HRESULT DemoApp::LoadBitmapFromResource(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR resourceName, PCWSTR resourceType, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap)
 {

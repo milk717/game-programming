@@ -13,6 +13,7 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <wincodec.h>
+#include <dwmapi.h>
 
 #include "Animation.h"
 
@@ -61,15 +62,18 @@ private:
 	//붓
 	ID2D1SolidColorBrush* m_pRedBrush;
 	ID2D1SolidColorBrush* m_pYellowBrush;
-	ID2D1BitmapBrush* m_pGridPatternBitmapBrush;
-
+	
 
 	//비트맵
 	ID2D1Bitmap* m_pBitmap;	//배경 비트맵
 	ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
 
+	//비트맵 브러쉬
+	ID2D1BitmapBrush* m_pBackgroundBitmapBrush;
+	ID2D1BitmapBrush* m_pGridPatternBitmapBrush;
+	ID2D1BitmapBrush* m_pCharactorBitmapBrush;
+
 public:
-	void DrawBackground(D2D1_SIZE_F renderTargetSize);	//배경 그리기
 	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
 
 };
