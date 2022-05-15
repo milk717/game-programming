@@ -45,6 +45,7 @@ DemoApp::DemoApp() :
 	m_pYellowBrush(NULL),
 	m_pBitmap(NULL),
 	m_pGridPatternBitmapBrush(NULL),
+	m_pCharactorBitmap(NULL),
 
 	m_Animation()
 {
@@ -61,6 +62,8 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pYellowBrush);
 	SAFE_RELEASE(m_pGridPatternBitmapBrush);;
 	SAFE_RELEASE(m_pBitmap);
+	SAFE_RELEASE(m_pCharactorBitmap);
+
 
 }
 
@@ -220,6 +223,11 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"background", L"Image", 200, 0, &m_pBitmap);
 		}//배경 비트맵 객체 생성
+
+		if (SUCCEEDED(hr)) {
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"charactor", L"Image", 200, 0, &m_pCharactorBitmap);
+		}
+
 		if (SUCCEEDED(hr))
 		{
 			hr = CreateGridPatternBrush(m_pRenderTarget, &m_pGridPatternBitmapBrush);
@@ -274,7 +282,20 @@ HRESULT DemoApp::OnRender()
 		// 렌더타겟을 클리어함.
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
-		//DrawBackground(rtSize);
+		DrawBackground(rtSize);
+
+		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
+		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, rtSize.height / 1.85);
+		// 비트맵 m_pBitmap을 그림.
+		m_pRenderTarget->DrawBitmap(
+			m_pCharactorBitmap,
+			D2D1::RectF(
+				leftGround.x,
+				leftGround.y,
+				leftGround.x + rtSize.height / size.height * 40 * 0.99,	//지면과 높이를 위해 비트맵 높이값으로 비율계산
+				leftGround.y + rtSize.height / size.height * 40),
+			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+		);
 
 		// 이동 동선 기하 경로가 화면 중심에 그려지도록 함.
 		m_pRenderTarget->SetTransform(scale * translation);
@@ -299,7 +320,7 @@ HRESULT DemoApp::OnRender()
 
 		// 삼각형을 노란색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
-		DrawBackground(rtSize);	//배경 그리기
+		
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();

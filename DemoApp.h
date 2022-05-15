@@ -66,7 +66,7 @@ private:
 
 	//비트맵
 	ID2D1Bitmap* m_pBitmap;	//배경 비트맵
-	//ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
+	ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
 
 public:
 	void DrawBackground(D2D1_SIZE_F renderTargetSize);	//배경 그리기

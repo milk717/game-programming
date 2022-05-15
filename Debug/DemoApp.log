@@ -1,2 +1,4 @@
 ﻿  DemoApp.cpp
-  DemoApp.vcxproj -> C:\Users\LInDaSoo\Downloads\09bitmap1\04.SimplePathAnimationSample\Debug\DemoApp.exe
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(288,63): warning C4244: '인수': 'double'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(295,18): warning C4244: '인수': 'double'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  DemoApp.vcxproj -> C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\Debug\DemoApp.exe
