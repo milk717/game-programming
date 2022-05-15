@@ -217,7 +217,7 @@ HRESULT DemoApp::CreateDeviceResources()
 		RECT rc;
 		GetClientRect(m_hwnd, &rc);
 
-		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+		D2D1_SIZE_U size = D2D1::SizeU((rc.right - rc.left)*3, (rc.bottom - rc.top)*2);
 
 		// D2D 렌더타겟을 생성함.
 		hr = m_pD2DFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(m_hwnd, size), &m_pRenderTarget);
@@ -319,16 +319,9 @@ HRESULT DemoApp::OnRender()
 		//미니언 그리는 순간 애니메이션 적용 안됨,,, 왜??
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, rtSize.height / 1.85);
-		//비트맵 m_pBitmap을 그림.
-		m_pRenderTarget->DrawBitmap(
-			m_pCharactorBitmap,
-			D2D1::RectF(
-				leftGround.x,
-				leftGround.y,
-				leftGround.x + rtSize.height / size.height * 40 * 0.99,	//지면과 높이를 위해 비트맵 높이값으로 비율계산
-				leftGround.y + rtSize.height / size.height * 40),
-			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-		);
+	
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+
 
 		static float anim_time = 0.0f;
 
