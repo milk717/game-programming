@@ -50,14 +50,16 @@ private:
 	ID2D1Factory* m_pD2DFactory;
 	IWICImagingFactory* m_pWICFactory;
 	ID2D1HwndRenderTarget* m_pRenderTarget;
-	ID2D1PathGeometry* m_pPathGeometry;
-	ID2D1PathGeometry* m_pObjectGeometry;
 
 
 	AnimationEaseInOut<float> m_Animation;
 
 	LARGE_INTEGER m_nPrevTime;
 	LARGE_INTEGER m_nFrequency;
+
+	//°æ·Î±âÇÏ
+	ID2D1PathGeometry* m_pPathGeometry;
+	//ID2D1PathGeometry* m_pCharactorPathGeometry;
 
 	//º×
 	ID2D1SolidColorBrush* m_pRedBrush;
