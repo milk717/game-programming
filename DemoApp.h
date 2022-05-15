@@ -14,6 +14,8 @@
 #include <dwrite.h>
 #include <wincodec.h>
 
+#include "Animation.h"
+
 // 자원 안전 반환 매크로.
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
 
@@ -31,6 +33,9 @@ public:
 	HRESULT Initialize();
 	void RunMessageLoop();
 
+	HRESULT LoadBitmapFromResource(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR resourceName, PCWSTR resourceType, UINT destinationWidth, UINT destinationHeight, __deref_out ID2D1Bitmap** ppBitmap);
+
+
 private:
 	HRESULT CreateDeviceIndependentResources();
 	HRESULT CreateDeviceResources();
@@ -39,19 +44,32 @@ private:
 	void OnResize(UINT width, UINT height);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
-
-	HRESULT LoadBitmapFromResource(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR resourceName, PCWSTR resourceType, UINT destinationWidth, UINT destinationHeight, __deref_out ID2D1Bitmap** ppBitmap);
-	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, __deref_out ID2D1Bitmap** ppBitmap);
-
-	//기능 분리 함수들
-	void DrawBackground(D2D1_SIZE_F renderTargetSize);	//배경 그리기
-
 private:
 	HWND m_hwnd;
 	ID2D1Factory* m_pD2DFactory;
 	IWICImagingFactory* m_pWICFactory;
 	ID2D1HwndRenderTarget* m_pRenderTarget;
+	ID2D1PathGeometry* m_pPathGeometry;
+	ID2D1PathGeometry* m_pObjectGeometry;
+
+
+	AnimationEaseInOut<float> m_Animation;
+
+	LARGE_INTEGER m_nPrevTime;
+	LARGE_INTEGER m_nFrequency;
+
+	//붓
+	ID2D1SolidColorBrush* m_pRedBrush;
+	ID2D1SolidColorBrush* m_pYellowBrush;
 	ID2D1BitmapBrush* m_pGridPatternBitmapBrush;
-	ID2D1Bitmap* m_pBitmap;
+
+
+	//비트맵
+	ID2D1Bitmap* m_pBitmap;	//배경 비트맵
+	//ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
+
+public:
+	void DrawBackground(D2D1_SIZE_F renderTargetSize);	//배경 그리기
+	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
+
 };

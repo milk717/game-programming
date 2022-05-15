@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by HW_202001492_김수민.rc
+// Used by DemoApp.rc
 
 // 다음은 새 개체에 사용할 기본값입니다.
 // 
