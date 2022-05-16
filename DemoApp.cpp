@@ -136,10 +136,7 @@ HRESULT DemoApp::Initialize()
 		if (SUCCEEDED(hr))
 		{
 			float length = 0;
-			float charLength = 0;
 			hr = m_pPathGeometry->ComputeLength(NULL, &length);
-			hr = m_pPathGeometry->ComputeLength(NULL, &charLength);
-
 
 			if (SUCCEEDED(hr))
 			{
@@ -169,14 +166,14 @@ void DemoApp::WriteActionInfo()
 	D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
 
 	WCHAR szText[250];
-	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n temp = %f\nobject = (%f, %f)",
+	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n장애물 위치 = %f\n캐릭터 좌표 = (%f, %f)",
 		currentMousePosition.x, currentMousePosition.y, temp, chx, chy);
 
 	m_pRenderTarget->DrawText(
 		szText,
 		wcslen(szText),
 		m_pTextFormat,
-		D2D1::RectF(10.0f, 30.0f, 200.0f, 240.0f),
+		D2D1::RectF(10.0f, 30.0f, 500.0f, 240.0f),
 		m_pTextBrush
 	);
 
@@ -292,36 +289,6 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 		hr = pSink->Close();
 	}
 	SAFE_RELEASE(pSink);
-
-	// 미니언 점프 경로 기하 그리기
-	if (SUCCEEDED(hr))
-	{
-		hr = m_pD2DFactory->CreatePathGeometry(&m_pCharGeometry);
-
-		if (SUCCEEDED(hr))
-		{
-			hr = m_pCharGeometry->Open(&pSink);
-
-			if (SUCCEEDED(hr))
-			{
-				D2D1_POINT_2F currentLocation = { 0.0f, 300.0f };
-
-				pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
-
-				//pSink->AddLine(D2D1::Point2F(0, -100));
-
-				pSink->AddLine({ 0.0F, 0.0F });
-				
-				pSink->AddLine({ 0.0F,300.0F });
-
-				pSink->EndFigure(D2D1_FIGURE_END_OPEN);
-
-				hr = pSink->Close();
-			}
-			SAFE_RELEASE(pSink);
-		}
-	}
-
 
 	return hr;
 }
@@ -484,7 +451,7 @@ HRESULT DemoApp::OnRender()
 		temp = point.x;
 		chx = 0;
 		chy = jump;
-		if (isCrash()) {
+		if (isCrash()&&isStart) {
 			score = 0;
 			isStart = false;
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
@@ -494,7 +461,6 @@ HRESULT DemoApp::OnRender()
 			Sleep(3000);
 			TRACE(L"true");
 		}
-		
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
@@ -528,9 +494,9 @@ HRESULT DemoApp::OnRender()
 
 bool DemoApp::isCrash() {
 	//TRACE(L"object = %d\tcharactor = (%f, %f)\n",temp, chx, chy);
-	if (temp>=-670 && temp <= -480) { 
+	if (temp>=-670 && temp <= -590) { 
 		//TRACE(L"temp\n");
-		if (320 <= chy && chy <= 400) {
+		if (330 <= chy && chy <= 400) {
 			//TRACE(L"chy\n");
 			return true;
 		}
