@@ -18,6 +18,11 @@ void TRACE_WIN32(LPCTSTR lpszFormat, ...) {
 
 bool isStart = false;
 bool isJumpClick = false;
+D2D1_POINT_2F charPoint = {30,400};
+int score = 0;
+
+/* 현재 마우스 위치 좌표 */
+D2D_POINT_2F currentMousePosition;
 
 int WINAPI WinMain(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
@@ -56,6 +61,13 @@ DemoApp::DemoApp() :
 	m_pGridPatternBitmapBrush(NULL),
 	m_pCharactorBitmapBrush(NULL),
 
+	// Text
+	m_pDWriteFactory(NULL),
+	m_pTextBrush(NULL),
+	m_pTextFormat(NULL),
+	m_score_TextFormat(NULL),
+
+
 	m_Animation()
 {
 }
@@ -77,9 +89,14 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pCharactorBitmapBrush);
 	SAFE_RELEASE(m_pBackgroundBitmapBrush);
 
+	// Text
+	SAFE_RELEASE(m_pDWriteFactory);
+	SAFE_RELEASE(m_pTextBrush);
+	SAFE_RELEASE(m_pTextFormat);
+	SAFE_RELEASE(m_score_TextFormat);
+
 
 	SAFE_RELEASE(m_pCharactorBitmap);
-
 
 }
 
@@ -130,6 +147,40 @@ HRESULT DemoApp::Initialize()
 	return hr;
 }
 
+void DemoApp::WriteActionInfo()
+{
+	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+	// debug
+	RECT rc;
+	GetClientRect(m_hwnd, &rc);
+	D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+
+	WCHAR szText[250];
+	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n",
+		currentMousePosition.x, currentMousePosition.y);
+
+	m_pRenderTarget->DrawText(
+		szText,
+		wcslen(szText),
+		m_pTextFormat,
+		D2D1::RectF(10.0f, 30.0f, 150.0f, 240.0f),
+		m_pTextBrush
+	);
+
+	swprintf_s(szText, L"점수 : %d", score);
+
+	m_pRenderTarget->DrawText(
+		szText,
+		wcslen(szText),
+		m_score_TextFormat,
+		D2D1::RectF(800.f, 30.0f, 900.0f, 240.0f),
+		m_pTextBrush
+	);
+
+	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+}
+
 HRESULT DemoApp::CreateDeviceIndependentResources()
 {
 	HRESULT hr;
@@ -139,6 +190,47 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
 	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWICFactory));
 
+	/*
+	* TextFormat
+	*/
+	if (SUCCEEDED(hr))
+	{
+		// DirectWrite 팩토리를 생성함.
+		hr = DWriteCreateFactory(
+			DWRITE_FACTORY_TYPE_SHARED,
+			__uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&m_pDWriteFactory)
+		);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		//DirectWrite 텍스트 포맷 객체를 생성함.
+		hr = m_pDWriteFactory->CreateTextFormat(
+			L"Verdana",     // The font family name.
+			NULL,           // The font collection (NULL sets it to use the system font collection).
+			DWRITE_FONT_WEIGHT_REGULAR,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			13.0f,
+			L"en-us",
+			&m_pTextFormat
+		);
+	}
+	if (SUCCEEDED(hr))
+	{
+		// Create a DirectWrite text format object.
+		hr = m_pDWriteFactory->CreateTextFormat(
+			L"Verdana",     // The font family name.
+			NULL,           // The font collection (NULL sets it to use the system font collection).
+			DWRITE_FONT_WEIGHT_REGULAR,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			25.0f,
+			L"en-us",
+			&m_score_TextFormat
+		);
+	}
 
 	// 나선형 모양의 경로 기하를 생성함.
 	if (SUCCEEDED(hr))
@@ -245,6 +337,10 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_pYellowBrush);
 		}
+		// 검정색 붓을 생성함.
+		if (SUCCEEDED(hr)) {
+			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pTextBrush);
+		}
 		/*
 		* 비트맵 객체 생성
 		*/
@@ -303,6 +399,7 @@ HRESULT DemoApp::OnRender()
 
 	//캐릭터 이동 애니메이션
 	static float charAnimationTime = 0.0F;
+	static float anim_time = 0.0f;
 
 	hr = CreateDeviceResources();
 
@@ -332,66 +429,85 @@ HRESULT DemoApp::OnRender()
 		D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 100, 100);
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
+		WriteActionInfo();	//마우스 좌표 정보 보이도록
+
 		//미니언 그리기
 		//D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		//D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
 		//m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
 		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 
-		static float anim_time = 0.0f;
+		if (isStart && isJumpClick) {
+			if (charPoint.y < 300 && charPoint.y > 0) {
+				charPoint.y++;
+			}
+			if (charPoint.y > 300) {
+				charPoint.y--;
+			}
+			if (charPoint.y < 0) {
+				isJumpClick = false;
+			}
+		}
+		
 
-		float length = m_Animation.GetValue(anim_time);
+		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(charPoint.x, charPoint.y));
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+		
 
-		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
-
-		// 삼각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-		triangleMatrix = D2D1::Matrix3x2F(
-			tangent.x, tangent.y,
-			-tangent.y, tangent.x,
-			point.x, point.y);
-
-		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
-
-		// 삼각형을 노란색으로 그림.
-		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
-
-		// m_pSpaceRockBitmap
-
-		D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
-		D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
-		if(isStart && isJumpClick) {
-			// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
-			m_pRenderTarget->SetTransform(scale * translationToJump);
-
-			// 이동 동선을 빨간색으로 그림.
-			m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
-
-			float length = m_Animation.GetValue(charAnimationTime);
-
-			D2D1_POINT_2F point;
+		{
+			float length = m_Animation.GetValue(anim_time);
 
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pCharGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+			m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
 
-			// 우주 암석의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-			D2D1_MATRIX_3X2_F spaceRockMatrix = D2D1::Matrix3x2F(
-				1.0F, 0.0F,
-				0.0F, 1.0F,
-				point.x, point.y
-			);
+			// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+			triangleMatrix = D2D1::Matrix3x2F(
+				tangent.x, tangent.y,
+				-tangent.y, tangent.x,
+				point.x, point.y);
 
-			m_pRenderTarget->SetTransform(spaceRockMatrix * scale * translationToJump);
+			m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 
-			D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
-			m_pRenderTarget->DrawBitmap(
-				m_pCharactorBitmap,
-				D2D1::RectF(
-					-size.width, -size.height,
-					size.width, size.height
-				)
-			);
+			// 삼각형을 빨간색으로 그림.
+			m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
 		}
+
+		//// 미니언 점프
+		//D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
+		//D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
+		//if(isStart && isJumpClick) {
+		//	// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
+		//	m_pRenderTarget->SetTransform(scale * translationToJump);
+
+		//	// 이동 동선을 빨간색으로 그림.
+		//	m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
+
+		//	float length = m_Animation.GetValue(charAnimationTime);
+
+		//	D2D1_POINT_2F point;
+
+		//	// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+		//	m_pCharGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+
+		//	// 미니언을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+		//	D2D1_MATRIX_3X2_F spaceRockMatrix = D2D1::Matrix3x2F(
+		//		1.0F, 0.0F,
+		//		0.0F, 1.0F,
+		//		point.x, point.y
+		//	);
+
+		//	m_pRenderTarget->SetTransform(spaceRockMatrix * scale * translationToJump);
+
+		//	D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
+		//	m_pRenderTarget->DrawBitmap(
+		//		m_pCharactorBitmap,
+		//		D2D1::RectF(
+		//			-size.width, -size.height,
+		//			size.width, size.height
+		//		)
+		//	);
+		//}
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
 
@@ -402,7 +518,7 @@ HRESULT DemoApp::OnRender()
 		}
 
 		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
-		if (anim_time >= m_Animation.GetDuration() || charAnimationTime >= m_Animation.GetDuration())
+		if (anim_time >= m_Animation.GetDuration())
 		{
 			anim_time = 0.0f;
 			charAnimationTime = 0.0f;
@@ -496,6 +612,15 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 					isJumpClick = true;		//점프라고 표시
 				}
 			}
+
+			case WM_MOUSEMOVE:
+			{
+				currentMousePosition.x = LOWORD(lParam);
+				currentMousePosition.y = HIWORD(lParam);
+				InvalidateRect(hwnd, NULL, FALSE);
+				break;
+			}
+
 			break;
 
 			case WM_DESTROY:

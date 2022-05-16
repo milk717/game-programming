@@ -66,6 +66,7 @@ private:
 	//º×
 	ID2D1SolidColorBrush* m_pRedBrush;
 	ID2D1SolidColorBrush* m_pYellowBrush;
+	ID2D1SolidColorBrush* m_pTextBrush;
 
 
 	//ºñÆ®¸Ê
@@ -77,7 +78,13 @@ private:
 	ID2D1BitmapBrush* m_pGridPatternBitmapBrush;
 	ID2D1BitmapBrush* m_pCharactorBitmapBrush;
 
+	//ÅØ½ºÆ®
+	IDWriteFactory* m_pDWriteFactory;
+	IDWriteTextFormat* m_pTextFormat;
+	IDWriteTextFormat* m_score_TextFormat;
+
 public:
 	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
+	void WriteActionInfo();
 
 };

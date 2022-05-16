@@ -1,8 +1,6 @@
 ﻿  DemoApp.cpp
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(334): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(371,19): warning C4456: 'length' 선언은 이전 로컬 선언을 숨깁니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(344,9): message : 'length' 선언을 참조하십시오.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(373,23): warning C4456: 'point' 선언은 이전 로컬 선언을 숨깁니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(312,17): message : 'point' 선언을 참조하십시오.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(334,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(430): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(455): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(430,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(455,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
   DemoApp.vcxproj -> C:\Users\robol\source\repos\milk717\game-programming\Debug\DemoApp.exe
