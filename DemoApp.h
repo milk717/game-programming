@@ -57,7 +57,7 @@ private:
 	ID2D1PathGeometry* m_pCharGeometry;
 
 
-	AnimationEaseInOut<float> m_Animation;
+	AnimationLinear<float> m_Animation;
 
 
 	LARGE_INTEGER m_nPrevTime;

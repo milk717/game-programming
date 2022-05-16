@@ -151,32 +151,13 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 	if (SUCCEEDED(hr))
 	{
-		D2D1_POINT_2F currentLocation = { 0, 0 };
+		D2D1_POINT_2F currentLocation = { 960, 170 };
 
 		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_FILLED);
 
-		D2D1_POINT_2F locDelta = { 2, 2 };
-		float radius = 3;
+		pSink->AddLine({ 960, 170.0F });
 
-		for (UINT i = 0; i < 30; ++i)
-		{
-			currentLocation.x += radius * locDelta.x;
-			currentLocation.y += radius * locDelta.y;
-
-			pSink->AddArc(
-				D2D1::ArcSegment(
-					currentLocation,
-					D2D1::SizeF(2 * radius, 2 * radius), // radiusx/y
-					0.0f, // rotation angle
-					D2D1_SWEEP_DIRECTION_CLOCKWISE,
-					D2D1_ARC_SIZE_SMALL
-				)
-			);
-
-			locDelta = D2D1::Point2F(-locDelta.y, locDelta.x);
-
-			radius += 3;
-		}
+		pSink->AddLine({ -960,170.0F });
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
@@ -196,10 +177,10 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 	if (SUCCEEDED(hr))
 	{
-		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
+		pSink->BeginFigure(D2D1::Point2F(-25.0f, -50.0f), D2D1_FIGURE_BEGIN_FILLED);
 
-		const D2D1_POINT_2F ptTriangle[] = { {-50.0f, -50.0f}, {-50.0f, 50.0f}, {0.0f, 0.0f} };
-		pSink->AddLines(ptTriangle, 3);
+		const D2D1_POINT_2F ptTriangle[] = { {-50.0f, -50.0f}, {-50.0f, 50.0f}, {50.0f, 50.0f},  {50.0f, -50.0f} };
+		pSink->AddLines(ptTriangle, 4);
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
@@ -264,7 +245,6 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_pYellowBrush);
 		}
-
 		/*
 		* ºñÆ®¸Ê °´Ã¼ »ý¼º
 		*/
