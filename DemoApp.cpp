@@ -40,6 +40,7 @@ DemoApp::DemoApp() :
 	m_pRenderTarget(NULL),
 	m_pWICFactory(NULL),
 	m_pPathGeometry(NULL),
+	m_pObjectGeometry(NULL),
 	m_pRedBrush(NULL),
 	m_pYellowBrush(NULL),
 
@@ -52,10 +53,6 @@ DemoApp::DemoApp() :
 	m_pGridPatternBitmapBrush(NULL),
 	m_pCharactorBitmapBrush(NULL),
 
-	//경로기하
-	//m_pCharactorPathGeometry(NULL),
-	m_pObjectGeometry(NULL),
-
 	m_Animation()
 {
 }
@@ -65,6 +62,8 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pD2DFactory);
 	SAFE_RELEASE(m_pWICFactory);
 	SAFE_RELEASE(m_pRenderTarget);
+	SAFE_RELEASE(m_pPathGeometry);
+	SAFE_RELEASE(m_pObjectGeometry);
 	SAFE_RELEASE(m_pRedBrush);
 	SAFE_RELEASE(m_pYellowBrush);
 	
@@ -75,11 +74,6 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pCharactorBitmapBrush);
 	SAFE_RELEASE(m_pBackgroundBitmapBrush);
 
-	//경로기하
-	SAFE_RELEASE(m_pPathGeometry);
-	SAFE_RELEASE(m_pObjectGeometry);
-	//SAFE_RELEASE(m_pCharactorPathGeometry);
-
 
 	SAFE_RELEASE(m_pCharactorBitmap);
 
@@ -89,8 +83,6 @@ DemoApp::~DemoApp()
 HRESULT DemoApp::Initialize()
 {
 	HRESULT hr;
-
-	hr = CreateDeviceIndependentResources();
 
 	//register window class
 	WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
@@ -105,11 +97,12 @@ HRESULT DemoApp::Initialize()
 	wcex.lpszClassName = L"D2DDemoApp";
 	RegisterClassEx(&wcex);
 
+	hr = CreateDeviceIndependentResources();
 	if (SUCCEEDED(hr))
 	{
 		m_hwnd = CreateWindow(
 			L"D2DDemoApp", L"Direct2D Demo Application", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-			1440, 1080, NULL, NULL, HINST_THISCOMPONENT, this);
+			512, 512, NULL, NULL, HINST_THISCOMPONENT, this);
 		hr = m_hwnd ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
@@ -188,29 +181,29 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 
 	SAFE_RELEASE(pSink);
-
-	// 캐릭터 경로 기하 그리기
+	
+	// 간단한 삼각형 모양의 경로 기하를 생성함.
 	if (SUCCEEDED(hr))
 	{
 		hr = m_pD2DFactory->CreatePathGeometry(&m_pObjectGeometry);
-
-		if (SUCCEEDED(hr))
-		{
-			hr = m_pObjectGeometry->Open(&pSink);
-
-			if (SUCCEEDED(hr))
-			{
-				D2D1_POINT_2F currentLocation = { 0.0f, 500.0f };
-
-				pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
-				pSink->AddLine(D2D1::Point2F(30, 500));
-				pSink->EndFigure(D2D1_FIGURE_END_OPEN);
-
-				hr = pSink->Close();
-			}
-			SAFE_RELEASE(pSink);
-		}
 	}
+	if (SUCCEEDED(hr))
+	{
+		hr = m_pObjectGeometry->Open(&pSink);
+	}
+	if (SUCCEEDED(hr))
+	{
+		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
+
+		const D2D1_POINT_2F ptTriangle[] = {{-10.0f, -10.0f}, {-10.0f, 10.0f}, {0.0f, 0.0f}};
+		pSink->AddLines(ptTriangle, 3);
+
+		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
+
+		hr = pSink->Close();
+	}
+
+	SAFE_RELEASE(pSink);
 
 	return hr;
 }
@@ -299,6 +292,10 @@ HRESULT DemoApp::OnRender()
 	hr = CreateDeviceResources();
 	if (SUCCEEDED(hr))
 	{
+		D2D1_POINT_2F point;
+		D2D1_POINT_2F tangent;
+ 
+		D2D1_MATRIX_3X2_F triangleMatrix;
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
 		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 512;
 
@@ -319,57 +316,37 @@ HRESULT DemoApp::OnRender()
 		D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 100, 100);
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
-		//미니언 그리기
+		//미니언 그리는 순간 애니메이션 적용 안됨,,, 왜??
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		D2D1::Matrix3x2F leftGround = D2D1::Matrix3x2F::Translation(0.f, 670);
-		m_pRenderTarget->SetTransform(leftGround);
-		m_pRenderTarget->FillRectangle(&D2D1::RectF(0,0, size.width, size.height), m_pCharactorBitmapBrush);
-
-		static float float_time = 0.0f;
-		float length = m_Animation.GetValue(float_time);
-
-		D2D1_POINT_2F point;
-		D2D1_POINT_2F tangent;
-		D2D1_MATRIX_3X2_F triangleMatrix;
-
-		hr = m_pPathGeometry->ComputePointAtLength(
-			length,
-			NULL,
-			&point,
-			&tangent
+		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, rtSize.height / 1.85);
+		//비트맵 m_pBitmap을 그림.
+		m_pRenderTarget->DrawBitmap(
+			m_pCharactorBitmap,
+			D2D1::RectF(
+				leftGround.x,
+				leftGround.y,
+				leftGround.x + rtSize.height / size.height * 40 * 0.99,	//지면과 높이를 위해 비트맵 높이값으로 비율계산
+				leftGround.y + rtSize.height / size.height * 40),
+			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
 		);
 
-		Assert(SUCCEEDED(hr));
+		static float anim_time = 0.0f;
 
+		float length = m_Animation.GetValue(anim_time);
 
-		D2D1_SIZE_U charSize = m_pCharactorBitmap->GetPixelSize();
-		D2D1::Matrix3x2F tmp = D2D1::Matrix3x2F::Translation(
-			point.x - charSize.width / 2,
-			point.y - charSize.height / 2
-		);
-		
+		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent); 
+
+		// 삼각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 		triangleMatrix = D2D1::Matrix3x2F(
-			-tangent.x, -tangent.y,
-			tangent.y, -tangent.x,
-			point.x - charSize.width / 2,
-			point.y - charSize.height / 2
-		);
+			tangent.x, tangent.y,
+			-tangent.y, tangent.x,
+			point.x, point.y);
 
-		/* 미니언 그리기 */
-		m_pRenderTarget->SetTransform(tmp);
-		m_pRenderTarget->FillRectangle(&rcBrushRect, m_pRedBrush);
+		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 
-		/* 미니언 애니메이션이 끝날때 조건 */
-		/*if (float_time >= m_Animation.GetDuration())
-		{
-			float_time = 0.0f;
-		}
-		else
-		{
-			float_time += static_cast<float>(fly_DwmTimingInfo.rateCompose.uiDenominator) /
-				static_cast<float>(fly_DwmTimingInfo.rateCompose.uiNumerator);
-		}
-		*/
+		// 삼각형을 노란색으로 그림.
+		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
 		
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
@@ -380,7 +357,21 @@ HRESULT DemoApp::OnRender()
 			DiscardDeviceResources();
 		}
 
-		
+		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
+		if (anim_time >= m_Animation.GetDuration())
+		{
+			anim_time = 0.0f;
+		}
+		else
+		{
+			LARGE_INTEGER CurrentTime;
+			QueryPerformanceCounter(&CurrentTime);
+
+			float elapsedTime = (float)((double)(CurrentTime.QuadPart - m_nPrevTime.QuadPart) / (double)(m_nFrequency.QuadPart));
+			m_nPrevTime = CurrentTime;
+
+			anim_time += elapsedTime;
+		}
 	}
 
 	return hr;
@@ -390,7 +381,11 @@ void DemoApp::OnResize(UINT width, UINT height)
 {
 	if (m_pRenderTarget)
 	{
-		m_pRenderTarget->Resize(D2D1::SizeU(width, height));
+		D2D1_SIZE_U size;
+		size.width = width;
+		size.height = height;
+
+		m_pRenderTarget->Resize(size);
 	}
 }
 

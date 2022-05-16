@@ -1,6 +1,6 @@
 ﻿  DemoApp.cpp
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(320): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(326): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(320,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
-C:\Users\robol\source\repos\milk717\game-programming\DemoApp.cpp(326,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
-  DemoApp.vcxproj -> C:\Users\robol\source\repos\milk717\game-programming\Debug\DemoApp.exe
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(317): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(321,63): warning C4244: '인수': 'double'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(328,18): warning C4244: '인수': 'double'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\DemoApp.cpp(317,41): warning C4238: 비표준 확장이 사용됨: 클래스 rvalue를 lvalue로 사용했습니다.
+  DemoApp.vcxproj -> C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\Debug\DemoApp.exe
