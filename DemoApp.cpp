@@ -182,7 +182,7 @@ void DemoApp::WriteActionInfo()
 		szText,
 		wcslen(szText),
 		m_score_TextFormat,
-		D2D1::RectF(800.f, 30.0f, 900.0f, 240.0f),
+		D2D1::RectF(800.f, 30.0f, 960.0f, 240.0f),
 		m_pTextBrush
 	);
 
@@ -615,6 +615,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			case WM_KEYDOWN:
 			{
+				score++;
 				if (!isStart) {	//시작 안했을 경우 시작해줌
 					isStart = true;
 				}
