@@ -57,7 +57,9 @@ private:
 	ID2D1PathGeometry* m_pCharGeometry;
 
 
+	//애니메이션
 	AnimationLinear<float> m_Animation;
+	AnimationEaseIn<float> m_JumpAnimation;
 
 
 	LARGE_INTEGER m_nPrevTime;
