@@ -2,6 +2,7 @@
 
 #include <tchar.h>
 #include <time.h>
+#include <cmath>
 
 //디버깅용 함수
 #if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
@@ -21,6 +22,7 @@ bool isStart = false;
 bool isJumpClick = false;
 D2D1_POINT_2F charPoint = {30,400};
 int score = 0;
+double jumpTime;
 
 /* 현재 마우스 위치 좌표 */
 D2D_POINT_2F currentMousePosition;
@@ -444,9 +446,9 @@ HRESULT DemoApp::OnRender()
 		WriteActionInfo();	//마우스 좌표 정보 보이도록
 
 		//미니언 그리기
-		double time = clock();
+
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400-time*0.5);
+		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, std::abs(400 - jumpTime));
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 		
