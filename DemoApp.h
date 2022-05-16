@@ -26,14 +26,6 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
 #endif
 
-#ifndef Assert
-#if defined( DEBUG ) || defined( _DEBUG )
-#define Assert(b) if (!(b)) {OutputDebugStringA("Assert: " #b "\n");}
-#else
-#define Assert(b)
-#endif
-#endif
-
 class DemoApp
 {
 public:
@@ -58,6 +50,8 @@ private:
 	ID2D1Factory* m_pD2DFactory;
 	IWICImagingFactory* m_pWICFactory;
 	ID2D1HwndRenderTarget* m_pRenderTarget;
+	ID2D1PathGeometry* m_pPathGeometry;
+	ID2D1PathGeometry* m_pObjectGeometry;
 
 
 	AnimationEaseInOut<float> m_Animation;
@@ -65,15 +59,10 @@ private:
 	LARGE_INTEGER m_nPrevTime;
 	LARGE_INTEGER m_nFrequency;
 
-	//∞Ê∑Œ±‚«œ
-	ID2D1PathGeometry* m_pPathGeometry;
-	ID2D1PathGeometry* m_pObjectGeometry;
-	//ID2D1PathGeometry* m_pCharactorPathGeometry;
-
 	//∫◊
 	ID2D1SolidColorBrush* m_pRedBrush;
 	ID2D1SolidColorBrush* m_pYellowBrush;
-	
+
 
 	//∫Ò∆Æ∏ 
 	ID2D1Bitmap* m_pBitmap;	//πË∞Ê ∫Ò∆Æ∏ 

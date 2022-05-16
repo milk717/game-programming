@@ -66,7 +66,7 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pObjectGeometry);
 	SAFE_RELEASE(m_pRedBrush);
 	SAFE_RELEASE(m_pYellowBrush);
-	
+
 	SAFE_RELEASE(m_pBitmap);
 
 	//비트맵 브러쉬
@@ -102,7 +102,7 @@ HRESULT DemoApp::Initialize()
 	{
 		m_hwnd = CreateWindow(
 			L"D2DDemoApp", L"Direct2D Demo Application", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-			512, 512, NULL, NULL, HINST_THISCOMPONENT, this);
+			960, 720, NULL, NULL, HINST_THISCOMPONENT, this);
 		hr = m_hwnd ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
@@ -148,11 +148,11 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 	if (SUCCEEDED(hr))
 	{
-		D2D1_POINT_2F currentLocation = {0, 0};
+		D2D1_POINT_2F currentLocation = { 0, 0 };
 
 		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_FILLED);
 
-		D2D1_POINT_2F locDelta = {2, 2};
+		D2D1_POINT_2F locDelta = { 2, 2 };
 		float radius = 3;
 
 		for (UINT i = 0; i < 30; ++i)
@@ -163,12 +163,12 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 			pSink->AddArc(
 				D2D1::ArcSegment(
 					currentLocation,
-					D2D1::SizeF(2*radius, 2*radius), // radiusx/y
+					D2D1::SizeF(2 * radius, 2 * radius), // radiusx/y
 					0.0f, // rotation angle
 					D2D1_SWEEP_DIRECTION_CLOCKWISE,
 					D2D1_ARC_SIZE_SMALL
-					)
-				);
+				)
+			);
 
 			locDelta = D2D1::Point2F(-locDelta.y, locDelta.x);
 
@@ -181,7 +181,7 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 
 	SAFE_RELEASE(pSink);
-	
+
 	// 간단한 삼각형 모양의 경로 기하를 생성함.
 	if (SUCCEEDED(hr))
 	{
@@ -195,7 +195,7 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	{
 		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
 
-		const D2D1_POINT_2F ptTriangle[] = {{-10.0f, -10.0f}, {-10.0f, 10.0f}, {0.0f, 0.0f}};
+		const D2D1_POINT_2F ptTriangle[] = { {-10.0f, -10.0f}, {-10.0f, 10.0f}, {0.0f, 0.0f} };
 		pSink->AddLines(ptTriangle, 3);
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
@@ -217,7 +217,7 @@ HRESULT DemoApp::CreateDeviceResources()
 		RECT rc;
 		GetClientRect(m_hwnd, &rc);
 
-		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+		D2D1_SIZE_U size = D2D1::SizeU((rc.right - rc.left), (rc.bottom - rc.top));
 
 		// D2D 렌더타겟을 생성함.
 		hr = m_pD2DFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(m_hwnd, size), &m_pRenderTarget);
@@ -294,10 +294,10 @@ HRESULT DemoApp::OnRender()
 	{
 		D2D1_POINT_2F point;
 		D2D1_POINT_2F tangent;
- 
+
 		D2D1_MATRIX_3X2_F triangleMatrix;
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
-		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 512;
+		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 960;
 
 		D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
 
@@ -316,26 +316,19 @@ HRESULT DemoApp::OnRender()
 		D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 100, 100);
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
-		//미니언 그리는 순간 애니메이션 적용 안됨,,, 왜??
+		//미니언 그리기
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, rtSize.height / 1.85);
-		//비트맵 m_pBitmap을 그림.
-		m_pRenderTarget->DrawBitmap(
-			m_pCharactorBitmap,
-			D2D1::RectF(
-				leftGround.x,
-				leftGround.y,
-				leftGround.x + rtSize.height / size.height * 40 * 0.99,	//지면과 높이를 위해 비트맵 높이값으로 비율계산
-				leftGround.y + rtSize.height / size.height * 40),
-			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-		);
+		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+
 
 		static float anim_time = 0.0f;
 
 		float length = m_Animation.GetValue(anim_time);
 
 		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent); 
+		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
 
 		// 삼각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 		triangleMatrix = D2D1::Matrix3x2F(
@@ -347,7 +340,7 @@ HRESULT DemoApp::OnRender()
 
 		// 삼각형을 노란색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
-		
+
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
 
@@ -410,43 +403,43 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 		if (pDemoApp)
 		{
-			switch(message)
+			switch (message)
 			{
 			case WM_SIZE:
-				{
-					UINT width = LOWORD(lParam);
-					UINT height = HIWORD(lParam);
-					pDemoApp->OnResize(width, height);
-				}
-				result = 0;
-				wasHandled = true;
-				break;
+			{
+				UINT width = LOWORD(lParam);
+				UINT height = HIWORD(lParam);
+				pDemoApp->OnResize(width, height);
+			}
+			result = 0;
+			wasHandled = true;
+			break;
 
 			case WM_DISPLAYCHANGE:
-				{
-					InvalidateRect(hwnd, NULL, FALSE);
-				}
-				result = 0;
-				wasHandled = true;
-				break;
+			{
+				InvalidateRect(hwnd, NULL, FALSE);
+			}
+			result = 0;
+			wasHandled = true;
+			break;
 
 			case WM_PAINT:
-				{
-					pDemoApp->OnRender();
+			{
+				pDemoApp->OnRender();
 
-					// 여기에서 ValidateRect를 호출하지 말아야 OnRender 함수가 계속 반복 호출됨.
-				}
-				result = 0;
-				wasHandled = true;
-				break;
+				// 여기에서 ValidateRect를 호출하지 말아야 OnRender 함수가 계속 반복 호출됨.
+			}
+			result = 0;
+			wasHandled = true;
+			break;
 
 			case WM_DESTROY:
-				{
-					PostQuitMessage(0);
-				}
-				result = 1;
-				wasHandled = true;
-				break;
+			{
+				PostQuitMessage(0);
+			}
+			result = 1;
+			wasHandled = true;
+			break;
 			}
 		}
 
