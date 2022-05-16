@@ -62,10 +62,11 @@ DemoApp::DemoApp() :
 	//비트맵
 	m_pBitmap(NULL),
 	m_pCharactorBitmap(NULL),
+	m_pGameoverBitmap(NULL),
 
 	//비트맵 브러쉬
 	m_pBackgroundBitmapBrush(NULL),
-	m_pGridPatternBitmapBrush(NULL),
+	m_pGameoverBitmapBrush(NULL),
 	m_pCharactorBitmapBrush(NULL),
 
 	// Text
@@ -92,7 +93,7 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pBitmap);
 
 	//비트맵 브러쉬
-	SAFE_RELEASE(m_pGridPatternBitmapBrush);
+	SAFE_RELEASE(m_pGameoverBitmapBrush);
 	SAFE_RELEASE(m_pCharactorBitmapBrush);
 	SAFE_RELEASE(m_pBackgroundBitmapBrush);
 
@@ -102,9 +103,10 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pTextFormat);
 	SAFE_RELEASE(m_score_TextFormat);
 
-
+	//비트맵
+	SAFE_RELEASE(m_pBitmap);
 	SAFE_RELEASE(m_pCharactorBitmap);
-
+	SAFE_RELEASE(m_pGameoverBitmap);
 }
 
 HRESULT DemoApp::Initialize()
@@ -358,18 +360,20 @@ HRESULT DemoApp::CreateDeviceResources()
 		if (SUCCEEDED(hr))
 		{
 			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"background", L"Image", size.width, size.height, &m_pBitmap);
-		}//배경 비트맵 객체 생성
-
+		}
 		if (SUCCEEDED(hr)) {
 			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"charactor", L"Image", 100, 100, &m_pCharactorBitmap);
-		}//미니언 비트맵 객체 생성
+		}
+		if (SUCCEEDED(hr)) {
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"gameover", L"Image", size.width, size.height, &m_pGameoverBitmap);
+		}
 
 		/*
 		* 비트맵 브러쉬 생성
 		*/
 		if (SUCCEEDED(hr))
 		{
-			hr = CreateGridPatternBrush(m_pRenderTarget, &m_pGridPatternBitmapBrush);
+			hr = m_pRenderTarget->CreateBitmapBrush(m_pGameoverBitmap, &m_pGameoverBitmapBrush);
 		}
 		if (SUCCEEDED(hr))
 		{
@@ -437,11 +441,11 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
 		//배경 그리기
-		D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 100, 100);
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
 		WriteActionInfo();	//마우스 좌표 정보 보이도록
 
+		//장애물 그리기
 		float length = m_Animation.GetValue(anim_time);
 
 		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
@@ -473,17 +477,24 @@ HRESULT DemoApp::OnRender()
 			
 			//TRACE(L"%f\n", jump);
 		}
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+
+		//장애물 충돌했을 때
 		temp = point.x;
 		chx = 0;
 		chy = jump;
 		if (isCrash()) {
 			score = 0;
 			isStart = false;
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
+			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 1000, 10000);
+			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
+			hr = m_pRenderTarget->EndDraw();
+			Sleep(3000);
 			TRACE(L"true");
 		}
-		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
-		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
-
+		
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
@@ -631,48 +642,6 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 	return result;
 }
-
-HRESULT DemoApp::CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, ID2D1BitmapBrush** ppBitmapBrush)
-{
-	HRESULT hr = S_OK;
-
-	// 호환 렌더타겟을 생성함.
-	ID2D1BitmapRenderTarget* pCompatibleRenderTarget = NULL;
-	hr = pRenderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(10.0f, 10.0f), &pCompatibleRenderTarget);
-
-	if (SUCCEEDED(hr))
-	{
-		// 격자 패턴을 그림.
-		ID2D1SolidColorBrush* pGridBrush = NULL;
-		hr = pCompatibleRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.93f, 0.94f, 0.96f, 1.0f), &pGridBrush);
-
-		if (SUCCEEDED(hr))
-		{
-			pCompatibleRenderTarget->BeginDraw();
-			pCompatibleRenderTarget->FillRectangle(D2D1::RectF(0.0f, 0.0f, 10.0f, 1.0f), pGridBrush);
-			pCompatibleRenderTarget->FillRectangle(D2D1::RectF(0.0f, 0.1f, 1.0f, 10.0f), pGridBrush);
-			pCompatibleRenderTarget->EndDraw();
-
-			// 렌더타겟으로부터 비트맵을 얻음.
-			ID2D1Bitmap* pGridBitmap = NULL;
-			hr = pCompatibleRenderTarget->GetBitmap(&pGridBitmap);
-
-			if (SUCCEEDED(hr))
-			{
-				// 비트맵 붓을 생성함.
-				hr = pRenderTarget->CreateBitmapBrush(pGridBitmap, D2D1::BitmapBrushProperties(D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP), ppBitmapBrush);
-
-				pGridBitmap->Release();
-			}
-
-			pGridBrush->Release();
-		}
-
-		pCompatibleRenderTarget->Release();
-	}
-
-	return hr;
-}   //배경 격자
 
 // Creates a Direct2D bitmap from a resource in the application resource file.
 HRESULT DemoApp::LoadBitmapFromResource(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR resourceName, PCWSTR resourceType, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap)

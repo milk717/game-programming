@@ -72,10 +72,11 @@ private:
 	//비트맵
 	ID2D1Bitmap* m_pBitmap;	//배경 비트맵
 	ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
+	ID2D1Bitmap* m_pGameoverBitmap;	//게임오버 비트맵
 
 	//비트맵 브러쉬
 	ID2D1BitmapBrush* m_pBackgroundBitmapBrush;
-	ID2D1BitmapBrush* m_pGridPatternBitmapBrush;
+	ID2D1BitmapBrush* m_pGameoverBitmapBrush;
 	ID2D1BitmapBrush* m_pCharactorBitmapBrush;
 
 	//텍스트
@@ -84,7 +85,6 @@ private:
 	IDWriteTextFormat* m_score_TextFormat;
 
 public:
-	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
 	void WriteActionInfo();
 	bool isCrash();
 };
