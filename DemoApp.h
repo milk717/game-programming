@@ -59,8 +59,6 @@ private:
 
 	//애니메이션
 	AnimationLinear<float> m_Animation;
-	AnimationLinear<float> m_JumpAnimation;
-
 
 	LARGE_INTEGER m_nPrevTime;
 	LARGE_INTEGER m_nFrequency;
@@ -88,5 +86,5 @@ private:
 public:
 	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
 	void WriteActionInfo();
-
+	bool isCrash(int object, D2D1_POINT_2F charactor);
 };
