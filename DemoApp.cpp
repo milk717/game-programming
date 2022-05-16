@@ -16,6 +16,9 @@ void TRACE_WIN32(LPCTSTR lpszFormat, ...) {
 }
 #endif
 
+bool isStart = false;
+bool isJumpClick = false;
+
 int WINAPI WinMain(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	if (SUCCEEDED(CoInitialize(NULL)))
@@ -377,7 +380,7 @@ HRESULT DemoApp::OnRender()
 
 		D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
 		D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
-		{
+		if(isStart && isJumpClick) {
 			// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
 			m_pRenderTarget->SetTransform(scale * translationToJump);
 
@@ -423,6 +426,7 @@ HRESULT DemoApp::OnRender()
 		{
 			anim_time = 0.0f;
 			charAnimationTime = 0.0f;
+			isJumpClick = false;
 		}
 		else
 		{
@@ -501,6 +505,17 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			}
 			result = 0;
 			wasHandled = true;
+			break;
+
+			case WM_KEYDOWN:
+			{
+				if (!isStart) {	//시작 안했을 경우 시작해줌
+					isStart = true;
+				}
+				else if (isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
+					isJumpClick = true;		//점프라고 표시
+				}
+			}
 			break;
 
 			case WM_DESTROY:
