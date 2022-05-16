@@ -462,7 +462,6 @@ HRESULT DemoApp::OnRender()
 		//m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(charPoint.x, charPoint.y));
 		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 		
-
 		{
 			float length = m_Animation.GetValue(anim_time);
 
@@ -493,19 +492,17 @@ HRESULT DemoApp::OnRender()
 
 			float charLength = m_JumpAnimation.GetValue(charAnimationTime);
 
-			D2D1_POINT_2F point;
-
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pCharGeometry->ComputePointAtLength(charLength, NULL, &point, &tangent);
+			m_pCharGeometry->ComputePointAtLength(charLength, NULL, &charPoint, &tangent);
 
 			// 미니언을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-			D2D1_MATRIX_3X2_F spaceRockMatrix = D2D1::Matrix3x2F(
+			D2D1_MATRIX_3X2_F charMatrix = D2D1::Matrix3x2F(
 				1.0F, 0.0F,
 				0.0F, 1.0F,
-				point.x, point.y
+				charPoint.x, charPoint.y
 			);
 
-			m_pRenderTarget->SetTransform(spaceRockMatrix * scale * translationToJump);
+			m_pRenderTarget->SetTransform(charMatrix * scale * translationToJump);
 
 			D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
 			m_pRenderTarget->DrawBitmap(
