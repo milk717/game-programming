@@ -18,6 +18,8 @@
 
 background Image "resource\\background.png"
 charactor Image "resource\\charactor.png"
+gameover Image "resource\\gameover.png"
+
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE 18, 1

@@ -23,6 +23,10 @@ bool isJumpClick = false;
 D2D1_POINT_2F charPoint = {30,400};
 int score = 0;
 double spaceTime;
+double temp = 0;	//좌표 임시저장
+double chx = 0;
+double chy = 0;
+double jump;
 
 /* 현재 마우스 위치 좌표 */
 D2D_POINT_2F currentMousePosition;
@@ -163,14 +167,14 @@ void DemoApp::WriteActionInfo()
 	D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
 
 	WCHAR szText[250];
-	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n",
-		currentMousePosition.x, currentMousePosition.y);
+	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n temp = %f\nobject = (%f, %f)",
+		currentMousePosition.x, currentMousePosition.y, temp, chx, chy);
 
 	m_pRenderTarget->DrawText(
 		szText,
 		wcslen(szText),
 		m_pTextFormat,
-		D2D1::RectF(10.0f, 30.0f, 150.0f, 240.0f),
+		D2D1::RectF(10.0f, 30.0f, 200.0f, 240.0f),
 		m_pTextBrush
 	);
 
@@ -265,7 +269,7 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 
 	SAFE_RELEASE(pSink);
 
-	// 간단한 삼각형 모양의 경로 기하를 생성함.
+	// 간단한 사각형 모양의 경로 기하를 생성함.
 	if (SUCCEEDED(hr))
 	{
 		hr = m_pD2DFactory->CreatePathGeometry(&m_pObjectGeometry);
@@ -438,42 +442,44 @@ HRESULT DemoApp::OnRender()
 
 		WriteActionInfo();	//마우스 좌표 정보 보이도록
 
-		{
-			float length = m_Animation.GetValue(anim_time);
+		float length = m_Animation.GetValue(anim_time);
 
-			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
 
-			// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-			triangleMatrix = D2D1::Matrix3x2F(
-				tangent.x, tangent.y,
-				-tangent.y, tangent.x,
-				point.x, point.y);
+		// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+		triangleMatrix = D2D1::Matrix3x2F(
+			tangent.x, tangent.y,
+			-tangent.y, tangent.x,
+			point.x, point.y);
 
-			//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
+		//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
 
-			m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
+		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 
-			// 사각형을 빨간색으로 그림.
-			m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
-		}
+		// 사각형을 빨간색으로 그림.
+		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
 		
 		//미니언 그리기 & 미니언 점프
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
 		if (isJumpClick) {
-			double jump = 100 + std::abs(300 - (clock() - spaceTime) * 0.5);
+			jump = 100 + std::abs(300 - (clock() - spaceTime) * 0.5);
 			if (jump > 400) {
 				jump = 400;
 				isJumpClick = false;
 			}
 			leftGround = D2D1::Point2F(0.f, jump);
-			if (isCrash(point.x, leftGround)) {
-				isStart = false;
-				score = 0;
-				TRACE(L"true");
-			}
+			
 			//TRACE(L"%f\n", jump);
+		}
+		temp = point.x;
+		chx = 0;
+		chy = jump;
+		if (isCrash()) {
+			score = 0;
+			isStart = false;
+			TRACE(L"true");
 		}
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
@@ -509,20 +515,20 @@ HRESULT DemoApp::OnRender()
 	return hr;
 }
 
-bool DemoApp::isCrash(int object, D2D1_POINT_2F charactor) {
-	TRACE(L"object = %d\tcharactor = (%f, %f)\n",object, charactor.x, charactor.y);
-	if (object<-610 && object > -690) { 
-		if (charactor.x == 0 ) {
-			if (320 < charactor.y && charactor.y < 400) {
-				return true;
-			}
+bool DemoApp::isCrash() {
+	//TRACE(L"object = %d\tcharactor = (%f, %f)\n",temp, chx, chy);
+	if (temp>=-670 && temp <= -480) { 
+		//TRACE(L"temp\n");
+		if (320 <= chy && chy <= 400) {
+			//TRACE(L"chy\n");
+			return true;
 		}
 	}
 	return false;
 }
 
 void DemoApp::OnResize(UINT width, UINT height)
-{
+{ 
 	if (m_pRenderTarget)
 	{
 		D2D1_SIZE_U size;

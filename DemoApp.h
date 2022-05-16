@@ -86,5 +86,5 @@ private:
 public:
 	HRESULT CreateGridPatternBrush(ID2D1RenderTarget* pRenderTarget, __deref_out ID2D1BitmapBrush** ppBitmapBrush);
 	void WriteActionInfo();
-	bool isCrash(int object, D2D1_POINT_2F charactor);
+	bool isCrash();
 };
