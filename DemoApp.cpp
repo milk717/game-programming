@@ -113,7 +113,7 @@ HRESULT DemoApp::Initialize()
 			{
 				m_Animation.SetStart(0); //start at beginning of path
 				m_Animation.SetEnd(length); //length at end of path
-				m_Animation.SetDuration(5.0f); //seconds
+				m_Animation.SetDuration(3.0f); //seconds
 
 				ShowWindow(m_hwnd, SW_SHOWNORMAL);
 				UpdateWindow(m_hwnd);
@@ -195,12 +195,41 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	{
 		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
 
-		const D2D1_POINT_2F ptTriangle[] = { {-10.0f, -10.0f}, {-10.0f, 10.0f}, {0.0f, 0.0f} };
+		const D2D1_POINT_2F ptTriangle[] = { {-50.0f, -50.0f}, {-50.0f, 50.0f}, {0.0f, 0.0f} };
 		pSink->AddLines(ptTriangle, 3);
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
 		hr = pSink->Close();
+	}
+
+	// 미니언 점프 경로 기하 그리기
+	if (SUCCEEDED(hr))
+	{
+		hr = m_pD2DFactory->CreatePathGeometry(&m_pCharGeometry);
+
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pCharGeometry->Open(&pSink);
+
+			if (SUCCEEDED(hr))
+			{
+				D2D1_POINT_2F currentLocation = { 0.0f, 300.0f };
+
+				pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
+
+				//pSink->AddLine(D2D1::Point2F(0, -100));
+
+				pSink->AddLine({ 0.0F, 0.0F });
+				
+				pSink->AddLine({ 0.0F,300.0F });
+
+				pSink->EndFigure(D2D1_FIGURE_END_OPEN);
+
+				hr = pSink->Close();
+			}
+			SAFE_RELEASE(pSink);
+		}
 	}
 
 	SAFE_RELEASE(pSink);
@@ -289,7 +318,11 @@ HRESULT DemoApp::OnRender()
 {
 	HRESULT hr;
 
+	//캐릭터 이동 애니메이션
+	static float charAnimationTime = 0.0F;
+
 	hr = CreateDeviceResources();
+
 	if (SUCCEEDED(hr))
 	{
 		D2D1_POINT_2F point;
@@ -317,11 +350,10 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
 
 		//미니언 그리기
-		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
-		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
-		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
-
+		//D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
+		//D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
+		//m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
+		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 
 		static float anim_time = 0.0f;
 
@@ -341,6 +373,42 @@ HRESULT DemoApp::OnRender()
 		// 삼각형을 노란색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pYellowBrush);
 
+		// m_pSpaceRockBitmap
+
+		D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
+		D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
+		{
+			// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
+			m_pRenderTarget->SetTransform(scale * translationToJump);
+
+			// 이동 동선을 빨간색으로 그림.
+			m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
+
+			float length = m_Animation.GetValue(charAnimationTime);
+
+			D2D1_POINT_2F point;
+
+			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+			m_pCharGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+
+			// 우주 암석의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+			D2D1_MATRIX_3X2_F spaceRockMatrix = D2D1::Matrix3x2F(
+				1.0F, 0.0F,
+				0.0F, 1.0F,
+				point.x, point.y
+			);
+
+			m_pRenderTarget->SetTransform(spaceRockMatrix * scale * translationToJump);
+
+			D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
+			m_pRenderTarget->DrawBitmap(
+				m_pCharactorBitmap,
+				D2D1::RectF(
+					-size.width, -size.height,
+					size.width, size.height
+				)
+			);
+		}
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
 
@@ -351,9 +419,10 @@ HRESULT DemoApp::OnRender()
 		}
 
 		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
-		if (anim_time >= m_Animation.GetDuration())
+		if (anim_time >= m_Animation.GetDuration() || charAnimationTime >= m_Animation.GetDuration())
 		{
 			anim_time = 0.0f;
+			charAnimationTime = 0.0f;
 		}
 		else
 		{
@@ -364,6 +433,7 @@ HRESULT DemoApp::OnRender()
 			m_nPrevTime = CurrentTime;
 
 			anim_time += elapsedTime;
+			charAnimationTime += elapsedTime;
 		}
 	}
 

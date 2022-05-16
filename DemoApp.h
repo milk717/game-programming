@@ -50,11 +50,15 @@ private:
 	ID2D1Factory* m_pD2DFactory;
 	IWICImagingFactory* m_pWICFactory;
 	ID2D1HwndRenderTarget* m_pRenderTarget;
+
+	//경로기하
 	ID2D1PathGeometry* m_pPathGeometry;
 	ID2D1PathGeometry* m_pObjectGeometry;
+	ID2D1PathGeometry* m_pCharGeometry;
 
 
 	AnimationEaseInOut<float> m_Animation;
+
 
 	LARGE_INTEGER m_nPrevTime;
 	LARGE_INTEGER m_nFrequency;
