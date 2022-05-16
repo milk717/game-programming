@@ -477,7 +477,7 @@ HRESULT DemoApp::OnRender()
 
 			m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 
-			// 삼각형을 빨간색으로 그림.
+			// 사각형을 빨간색으로 그림.
 			m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
 		}
 
@@ -491,12 +491,12 @@ HRESULT DemoApp::OnRender()
 			// 이동 동선을 빨간색으로 그림.
 			m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
 
-			float length = m_JumpAnimation.GetValue(charAnimationTime);
+			float charLength = m_JumpAnimation.GetValue(charAnimationTime);
 
 			D2D1_POINT_2F point;
 
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pCharGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+			m_pCharGeometry->ComputePointAtLength(charLength, NULL, &point, &tangent);
 
 			// 미니언을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 			D2D1_MATRIX_3X2_F spaceRockMatrix = D2D1::Matrix3x2F(
@@ -529,6 +529,8 @@ HRESULT DemoApp::OnRender()
 		if (anim_time >= m_Animation.GetDuration())
 		{
 			anim_time = 0.0f;
+		}
+		else if (charAnimationTime >= m_JumpAnimation.GetDuration()) {
 			charAnimationTime = 0.0f;
 			isJumpClick = false;
 		}

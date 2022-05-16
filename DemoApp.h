@@ -59,7 +59,7 @@ private:
 
 	//애니메이션
 	AnimationLinear<float> m_Animation;
-	AnimationEaseIn<float> m_JumpAnimation;
+	AnimationLinear<float> m_JumpAnimation;
 
 
 	LARGE_INTEGER m_nPrevTime;
