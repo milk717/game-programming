@@ -1,6 +1,7 @@
 #include "DemoApp.h"
 
 #include <tchar.h>
+#include <time.h>
 
 //디버깅용 함수
 #if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
@@ -193,6 +194,8 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 {
 	HRESULT hr;
 	ID2D1GeometrySink* pSink = NULL;
+	ID2D1GeometrySink* pJumpSink = NULL;
+
 
 	// D2D 팩토리를 생성함.
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
@@ -286,6 +289,8 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 
 		hr = pSink->Close();
 	}
+	SAFE_RELEASE(pSink);
+
 
 	// 미니언 점프 경로 기하 그리기
 	if (SUCCEEDED(hr))
@@ -294,29 +299,28 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 
 		if (SUCCEEDED(hr))
 		{
-			hr = m_pCharGeometry->Open(&pSink);
+			hr = m_pCharGeometry->Open(&pJumpSink);
 
 			if (SUCCEEDED(hr))
 			{
 				D2D1_POINT_2F currentLocation = { 0.0f, 300.0f };
 
-				pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
+				pJumpSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
 
 				//pSink->AddLine(D2D1::Point2F(0, -100));
 
-				pSink->AddLine({ 0.0F, 0.0F });
+				pJumpSink->AddLine({ 0.0F, 0.0F });
 				
-				pSink->AddLine({ 0.0F,300.0F });
+				pJumpSink->AddLine({ 0.0F,300.0F });
 
-				pSink->EndFigure(D2D1_FIGURE_END_OPEN);
+				pJumpSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
-				hr = pSink->Close();
+				hr = pJumpSink->Close();
 			}
-			SAFE_RELEASE(pSink);
+			SAFE_RELEASE(pJumpSink);
 		}
 	}
 
-	SAFE_RELEASE(pSink);
 
 	return hr;
 }
@@ -440,27 +444,11 @@ HRESULT DemoApp::OnRender()
 		WriteActionInfo();	//마우스 좌표 정보 보이도록
 
 		//미니언 그리기
-		//D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		//D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
-		//m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
-		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
-
-		//if (isStart && isJumpClick) {
-		//	if (charPoint.y < 300 && charPoint.y > 0) {
-		//		charPoint.y++;
-		//	}
-		//	if (charPoint.y > 300) {
-		//		charPoint.y--;
-		//	}
-		//	if (charPoint.y < 0) {
-		//		isJumpClick = false;
-		//	}
-		//}
-		//
-
-		//D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
-		//m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(charPoint.x, charPoint.y));
-		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+		double time = clock();
+		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
+		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400-time*0.5);
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
+		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 		
 		{
 			float length = m_Animation.GetValue(anim_time);
@@ -481,38 +469,38 @@ HRESULT DemoApp::OnRender()
 		}
 
 		// 미니언 점프
-		D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
-		D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
-		if(isStart && isJumpClick) {
-			// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
-			m_pRenderTarget->SetTransform(scale * translationToJump);
+		//D2D1_MATRIX_3X2_F translationToLeftGround = D2D1::Matrix3x2F::Translation(70, 370);
+		//D2D1_MATRIX_3X2_F translationToJump = translationToLeftGround * D2D1::Matrix3x2F::Translation(0.0F, -200.0F * minWidthHeightScale);
+		//if(isStart && isJumpClick) {
+		//	// 이동 동선 기하 경로가 화면 위쪽에 그려지도록 함.
+		//	m_pRenderTarget->SetTransform(scale * translationToJump);
 
-			// 이동 동선을 빨간색으로 그림.
-			m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
+		//	// 이동 동선을 빨간색으로 그림.
+		//	m_pRenderTarget->DrawGeometry(m_pCharGeometry, m_pRedBrush);
 
-			float charLength = m_JumpAnimation.GetValue(charAnimationTime);
+		//	float charLength = m_JumpAnimation.GetValue(charAnimationTime);
 
-			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pCharGeometry->ComputePointAtLength(charLength, NULL, &charPoint, &tangent);
+		//	// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+		//	m_pCharGeometry->ComputePointAtLength(charLength, NULL, &charPoint, &tangent);
 
-			// 미니언을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-			D2D1_MATRIX_3X2_F charMatrix = D2D1::Matrix3x2F(
-				1.0F, 0.0F,
-				0.0F, 1.0F,
-				charPoint.x, charPoint.y
-			);
+		//	// 미니언을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+		//	D2D1_MATRIX_3X2_F charMatrix = D2D1::Matrix3x2F(
+		//		1.0F, 0.0F,
+		//		0.0F, 1.0F,
+		//		charPoint.x, charPoint.y
+		//	);
 
-			m_pRenderTarget->SetTransform(charMatrix * scale * translationToJump);
+		//	m_pRenderTarget->SetTransform(charMatrix * scale * translationToJump);
 
-			D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
-			m_pRenderTarget->DrawBitmap(
-				m_pCharactorBitmap,
-				D2D1::RectF(
-					-size.width, -size.height,
-					size.width, size.height
-				)
-			);
-		}
+		//	D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();
+		//	m_pRenderTarget->DrawBitmap(
+		//		m_pCharactorBitmap,
+		//		D2D1::RectF(
+		//			-size.width, -size.height,
+		//			size.width, size.height
+		//		)
+		//	);
+		//}
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
 
