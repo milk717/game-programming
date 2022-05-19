@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <wchar.h>
 #include <math.h>
+#include <ctime>
 // DX Header Files
 #include <d2d1.h>
 #include <d2d1helper.h>
@@ -54,8 +55,7 @@ private:
 	//경로기하
 	ID2D1PathGeometry* m_pPathGeometry;
 	ID2D1PathGeometry* m_pObjectGeometry;
-	ID2D1PathGeometry* m_pCharGeometry;
-
+	ID2D1PathGeometry* m_pBackgroundGeometry;
 
 	//애니메이션
 	AnimationLinear<float> m_Animation;
@@ -67,7 +67,6 @@ private:
 	ID2D1SolidColorBrush* m_pRedBrush;
 	ID2D1SolidColorBrush* m_pYellowBrush;
 	ID2D1SolidColorBrush* m_pTextBrush;
-
 
 	//비트맵
 	ID2D1Bitmap* m_pBitmap;	//배경 비트맵
@@ -84,7 +83,13 @@ private:
 	IDWriteTextFormat* m_pTextFormat;
 	IDWriteTextFormat* m_score_TextFormat;
 
+	//게임정보 저장 변수
+	int score = 0;		//점수
+	bool isStart = false;
+	int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
+
 public:
 	void WriteActionInfo();
 	bool isCrash();
+	void ScoreCountStart();
 };

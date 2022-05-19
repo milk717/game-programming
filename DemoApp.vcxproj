@@ -236,6 +236,9 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CreateResources.cpp" />
+    <ClCompile Include="CustomerFunction.cpp" />
+    <ClCompile Include="Default.cpp" />
     <ClCompile Include="DemoApp.cpp" />
   </ItemGroup>
   <ItemGroup>
