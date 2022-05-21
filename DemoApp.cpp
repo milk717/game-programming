@@ -226,43 +226,20 @@ HRESULT DemoApp::OnRender()
 
 		TRACE(L"%f\n", rtSize.width);
 		//배경 그리기
-		//translation == 위치
-
-		//배경 움직이게
 		{
-			float backLength = m_Animation.GetValue(char_animation_time);
-			D2D1::Matrix3x2F backgroundScale = D2D1::Matrix3x2F::Scale(1,1);
-
-
-			D2D1_POINT_2F backpoint = D2D1::Point2F(0, 0);
-			m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, NULL);
-			D2D1_MATRIX_3X2_F backgroundMatrix = D2D1::Matrix3x2F(
-				1, 0,
-				0, 1,
-				backpoint.x, backpoint.y);
-			m_pRenderTarget->SetTransform(backgroundMatrix);
-
-			//배경을 그림
-			D2D1_SIZE_F backGroundBitmapSize = m_pBitmap->GetSize();
+			int backgroundPosition = -((int)(this->score*0.5)%944);
 			m_pRenderTarget->DrawBitmap(
 				m_pBitmap,
 				D2D1::RectF(
-					0, 0,
-					rtSize.width, rtSize.height
+					backgroundPosition, 0,
+					backgroundPosition+rtSize.width, rtSize.height
 				)
 			);
-
-			//두번째 배경
-			D2D1::Matrix3x2F backgroundTranslation = D2D1::Matrix3x2F::Translation(rtSize.width-0.3, 0);
-
-			m_pRenderTarget->SetTransform(backgroundMatrix* backgroundTranslation);
-
-			//배경을 그림
 			m_pRenderTarget->DrawBitmap(
 				m_pBitmap,
 				D2D1::RectF(
-					0, 0,
-					rtSize.width, rtSize.height
+					backgroundPosition+rtSize.width, 0,
+					backgroundPosition + rtSize.width*2, rtSize.height
 				)
 			);
 		}
@@ -327,7 +304,7 @@ HRESULT DemoApp::OnRender()
 			anim_time = 0.0f;
 			//charAnimationTime = 0.0f;
 		}
-		else if (char_animation_time >= 1.46) {
+		else if (char_animation_time >= 1.47) {
 			char_animation_time = 0.0f;
 		}
 		else
