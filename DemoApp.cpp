@@ -47,7 +47,7 @@ void DemoApp::WriteActionInfo()
 		wcslen(szText),
 		m_pTextFormat,
 		D2D1::RectF(10.0f, 30.0f, 500.0f, 240.0f),
-		m_pTextBrush
+		m_pRedBrush
 	);
 
 	swprintf_s(szText, L"점수 : %d", score);
@@ -197,7 +197,7 @@ HRESULT DemoApp::OnRender()
 	HRESULT hr;
 
 	//캐릭터 이동 애니메이션
-	static float charAnimationTime = 0.0F;
+	static float char_animation_time = 0.0F;
 	static float anim_time = 0.0f;
 
 	hr = CreateDeviceResources();
@@ -209,13 +209,12 @@ HRESULT DemoApp::OnRender()
 
 		D2D1_MATRIX_3X2_F triangleMatrix;
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
-		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 960;
+		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 720;
+		TRACE(L"%f\n", minWidthHeightScale);
 
 		D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
 
-		D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(rtSize.width / 2, rtSize.height / 2);
-
-		ScoreCountStart();	//점수카운트하기
+		D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(rtSize.width /2, rtSize.height/2 );
 
 		// 그리기를 준비함.
 		m_pRenderTarget->BeginDraw();
@@ -226,66 +225,47 @@ HRESULT DemoApp::OnRender()
 		// 렌더타겟을 클리어함.
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
+		ScoreCountStart();	//점수카운트하기
+		WriteActionInfo();	//info 출력
+
 		//배경 그리기
-		//m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, rtSize.width, rtSize.height), m_pBackgroundBitmapBrush);
+
+		////배경 움직이게
+		float backLength = m_Animation.GetValue(char_animation_time);
+		D2D1::Matrix3x2F backgroundScale = D2D1::Matrix3x2F::Scale(1, 1,D2D1::Point2F(0,0));
 
 
-		//배경 움직이게
-		float backLength = m_Animation.GetValue(charAnimationTime);
-		D2D1_POINT_2F backpoint;
-
+		D2D1_POINT_2F backpoint = D2D1::Point2F(0, 0);
 		m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, &tangent);
-		backpoint.x-= 1090;
 		triangleMatrix = D2D1::Matrix3x2F(
 			1, 0,
 			0, 1,
 			backpoint.x, backpoint.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
+		m_pRenderTarget->SetTransform(triangleMatrix * backgroundScale);
 		//배경을 그림
-		D2D1_SIZE_F backSize = m_pBitmap->GetSize();
+		D2D1_SIZE_F backGroundBitmapSize = m_pBitmap->GetSize();
 		m_pRenderTarget->DrawBitmap(
 			m_pBitmap,
 			D2D1::RectF(
-				-(backSize.width) , -backSize.height / 1.4,
-				backSize.width, backSize.height / 1.4
+				0, 0,
+				backpoint.x, rtSize.height
 			)
 		);
 
-		m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, &tangent);
-		backpoint.x -= 240;
-
+		backpoint = D2D1::Point2F(rtSize.width, 0);
 		triangleMatrix = D2D1::Matrix3x2F(
 			1, 0,
 			0, 1,
 			backpoint.x, backpoint.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
+		m_pRenderTarget->SetTransform(triangleMatrix * backgroundScale);
 		//배경을 그림
 		m_pRenderTarget->DrawBitmap(
 			m_pBitmap,
 			D2D1::RectF(
-				-(backSize.width), -backSize.height / 1.4,
-				backSize.width, backSize.height / 1.4
+				0, 0,
+				backpoint.x, rtSize.height
 			)
 		);
-
-		m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, &tangent);
-		backpoint.x += 1300;
-
-		triangleMatrix = D2D1::Matrix3x2F(
-			1, 0,
-			0, 1,
-			backpoint.x, backpoint.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
-		//배경을 그림
-		m_pRenderTarget->DrawBitmap(
-			m_pBitmap,
-			D2D1::RectF(
-				-(backSize.width), -backSize.height / 1.4,
-				backSize.width, backSize.height / 1.4
-			)
-		);
-
-		WriteActionInfo();	//마우스 좌표 정보 보이도록
 
 		//장애물 그리기
 		float length = m_Animation.GetValue(anim_time);
@@ -348,8 +328,8 @@ HRESULT DemoApp::OnRender()
 			anim_time = 0.0f;
 			//charAnimationTime = 0.0f;
 		}
-		else if (charAnimationTime >= 2.4) {
-			charAnimationTime = 0.0f;
+		else if (char_animation_time >= 2.4) {
+			char_animation_time = 0.0f;
 		}
 		else
 		{
@@ -360,7 +340,7 @@ HRESULT DemoApp::OnRender()
 			m_nPrevTime = CurrentTime;
 
 			anim_time += elapsedTime;
-			charAnimationTime += elapsedTime;
+			char_animation_time += elapsedTime;
 		}
 	}
 
