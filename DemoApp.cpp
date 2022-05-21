@@ -174,10 +174,10 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 	if (SUCCEEDED(hr))
 	{
-		D2D1_POINT_2F currentLocation = { 1350.0f, 0.0f };
+		D2D1_POINT_2F currentLocation = { 0.0f, 0.0f };
 
 		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
-		pSink->AddLine(D2D1::Point2F(-1350, 0));
+		pSink->AddLine(D2D1::Point2F(-944, 0));
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
@@ -187,9 +187,6 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 
 	return hr;
 }
-
-
-
 
 
 HRESULT DemoApp::OnRender()
@@ -209,8 +206,7 @@ HRESULT DemoApp::OnRender()
 
 		D2D1_MATRIX_3X2_F triangleMatrix;
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
-		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 720;
-		TRACE(L"%f\n", minWidthHeightScale);
+		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 650;
 
 		D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
 
@@ -228,44 +224,49 @@ HRESULT DemoApp::OnRender()
 		ScoreCountStart();	//점수카운트하기
 		WriteActionInfo();	//info 출력
 
+		TRACE(L"%f\n", rtSize.width);
 		//배경 그리기
+		//translation == 위치
 
-		////배경 움직이게
-		float backLength = m_Animation.GetValue(char_animation_time);
-		D2D1::Matrix3x2F backgroundScale = D2D1::Matrix3x2F::Scale(1, 1,D2D1::Point2F(0,0));
+		//배경 움직이게
+		{
+			float backLength = m_Animation.GetValue(char_animation_time);
+			D2D1::Matrix3x2F backgroundScale = D2D1::Matrix3x2F::Scale(1,1);
 
 
-		D2D1_POINT_2F backpoint = D2D1::Point2F(0, 0);
-		m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, &tangent);
-		triangleMatrix = D2D1::Matrix3x2F(
-			1, 0,
-			0, 1,
-			backpoint.x, backpoint.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * backgroundScale);
-		//배경을 그림
-		D2D1_SIZE_F backGroundBitmapSize = m_pBitmap->GetSize();
-		m_pRenderTarget->DrawBitmap(
-			m_pBitmap,
-			D2D1::RectF(
-				0, 0,
-				backpoint.x, rtSize.height
-			)
-		);
+			D2D1_POINT_2F backpoint = D2D1::Point2F(0, 0);
+			m_pBackgroundGeometry->ComputePointAtLength(backLength, NULL, &backpoint, NULL);
+			D2D1_MATRIX_3X2_F backgroundMatrix = D2D1::Matrix3x2F(
+				1, 0,
+				0, 1,
+				backpoint.x, backpoint.y);
+			m_pRenderTarget->SetTransform(backgroundMatrix);
 
-		backpoint = D2D1::Point2F(rtSize.width, 0);
-		triangleMatrix = D2D1::Matrix3x2F(
-			1, 0,
-			0, 1,
-			backpoint.x, backpoint.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * backgroundScale);
-		//배경을 그림
-		m_pRenderTarget->DrawBitmap(
-			m_pBitmap,
-			D2D1::RectF(
-				0, 0,
-				backpoint.x, rtSize.height
-			)
-		);
+			//배경을 그림
+			D2D1_SIZE_F backGroundBitmapSize = m_pBitmap->GetSize();
+			m_pRenderTarget->DrawBitmap(
+				m_pBitmap,
+				D2D1::RectF(
+					0, 0,
+					rtSize.width, rtSize.height
+				)
+			);
+
+			//두번째 배경
+			D2D1::Matrix3x2F backgroundTranslation = D2D1::Matrix3x2F::Translation(rtSize.width-0.3, 0);
+
+			m_pRenderTarget->SetTransform(backgroundMatrix* backgroundTranslation);
+
+			//배경을 그림
+			m_pRenderTarget->DrawBitmap(
+				m_pBitmap,
+				D2D1::RectF(
+					0, 0,
+					rtSize.width, rtSize.height
+				)
+			);
+		}
+
 
 		//장애물 그리기
 		float length = m_Animation.GetValue(anim_time);
@@ -280,7 +281,6 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 		// 사각형을 빨간색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
-
 
 		
 		//미니언 그리기 & 미니언 점프
@@ -302,10 +302,10 @@ HRESULT DemoApp::OnRender()
 		chx = 0;
 		chy = jump;
 		if (isCrash()&&isStart) {
-			score = 0;
+			this->score = 0;
 			isStart = false;
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
-			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 1000, 10000);
+			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 1000, 1000);
 			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
 			hr = m_pRenderTarget->EndDraw();
 			Sleep(3000);
@@ -324,11 +324,10 @@ HRESULT DemoApp::OnRender()
 		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
 		if (anim_time >= m_Animation.GetDuration())
 		{
-			TRACE(L"%f", m_Animation.GetDuration());
 			anim_time = 0.0f;
 			//charAnimationTime = 0.0f;
 		}
-		else if (char_animation_time >= 2.4) {
+		else if (char_animation_time >= 1.46) {
 			char_animation_time = 0.0f;
 		}
 		else

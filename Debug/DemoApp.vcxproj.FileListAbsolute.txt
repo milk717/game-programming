@@ -1,3 +1,4 @@
 C:\Users\LInDaSoo\Downloads\09bitmap1\04.SimplePathAnimationSample\Debug\DemoApp.exe
 C:\Users\LInDaSoo\Downloads\04.SimplePathAnimationSample\Debug\DemoApp.exe
 C:\Users\robol\source\repos\milk717\game-programming\Debug\DemoApp.exe
+C:\Users\LInDaSoo\source\repos\milk717\game-programming\Debug\DemoApp.exe
