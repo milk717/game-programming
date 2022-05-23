@@ -237,7 +237,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CreateResources.cpp" />
-    <ClCompile Include="CustomerFunction.cpp" />
+    <ClCompile Include="CustomFunction.cpp" />
     <ClCompile Include="Default.cpp" />
     <ClCompile Include="DemoApp.cpp" />
   </ItemGroup>

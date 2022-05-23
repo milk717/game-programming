@@ -87,9 +87,17 @@ private:
 	int score = 0;		//점수
 	bool isStart = false;
 	int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
+	FLOAT backgroundPosition = 1;
+	//D2D1_POINT_2F objectPoint;	//장애물의 좌표
+
+
+
 
 public:
 	void WriteActionInfo();
-	bool isCrash();
 	void ScoreCountStart();
+
+	//게임물리
+	float Acceleration();
+	bool isCrash();
 };

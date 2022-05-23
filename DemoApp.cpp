@@ -55,13 +55,13 @@ void DemoApp::WriteActionInfo()
 		m_pRedBrush
 	);
 
-	swprintf_s(szText, L"점수 : %d", score);
+	swprintf_s(szText, L"점수 : %05d", score/100);
 
 	m_pRenderTarget->DrawText(
 		szText,
 		wcslen(szText),
 		m_score_TextFormat,
-		D2D1::RectF(800.f, 30.0f, 960.0f, 240.0f),
+		D2D1::RectF(750.f, 30.0f, 944.0f, 240.0f),
 		m_pTextBrush
 	);
 
@@ -209,13 +209,8 @@ HRESULT DemoApp::OnRender()
 		D2D1_POINT_2F point;
 		D2D1_POINT_2F tangent;
 
-		D2D1_MATRIX_3X2_F triangleMatrix;
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
-		float minWidthHeightScale = min(rtSize.width, rtSize.height) / 650;
 
-		D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
-
-		D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(OBJECT_START_X_POSITION, GROUND_Y_POSITION);
 
 		// 그리기를 준비함.
 		m_pRenderTarget->BeginDraw();
@@ -227,10 +222,15 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
 
-		TRACE(L"%f\n", rtSize.width);
 		//배경 그리기
 		{
-			int backgroundPosition = -((int)(this->score*0.5)%944);
+			float acceleration = Acceleration();
+			TRACE(L"가속도 = %f\n", acceleration);
+
+			backgroundPosition = -(int)(this->score*acceleration)%944;
+
+			TRACE(L"배경 위치 = %f\n", backgroundPosition);
+
 			m_pRenderTarget->DrawBitmap(
 				m_pBitmap,
 				D2D1::RectF(
@@ -250,21 +250,24 @@ HRESULT DemoApp::OnRender()
 		ScoreCountStart();	//점수카운트하기
 		WriteActionInfo();	//info 출력
 
-		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-
 		//장애물 그리기
-		float length = m_Animation.GetValue(anim_time);
-		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-		m_pBackgroundGeometry->ComputePointAtLength(length, NULL, &point, NULL);
-		// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
-		triangleMatrix = D2D1::Matrix3x2F(
-			0, 1,
-			-1, 0,
-			point.x, point.y);
-		//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
-		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
-		// 사각형을 빨간색으로 그림.
-		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
+		{
+			D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(OBJECT_START_X_POSITION, GROUND_Y_POSITION);
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+			float length = m_Animation.GetValue(anim_time);
+			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+			m_pBackgroundGeometry->ComputePointAtLength(length, NULL, &point, NULL);
+			// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+			D2D1_MATRIX_3X2_F objectMatrix = D2D1::Matrix3x2F(
+				1, 0,
+				0, 1,
+				point.x, point.y);
+			//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
+			m_pRenderTarget->SetTransform(objectMatrix * translation);
+			// 사각형을 빨간색으로 그림.
+			m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
+		}
 
 
 		//미니언 그리기 & 미니언 점프
@@ -285,16 +288,16 @@ HRESULT DemoApp::OnRender()
 		temp = point.x;
 		chx = 0;
 		chy = jump;
-		if (isCrash()&&isStart) {
-			this->score = 0;
-			isStart = false;
-			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
-			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
-			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
-			hr = m_pRenderTarget->EndDraw();
-			Sleep(3000);
-			TRACE(L"true");
-		}
+		///*if (isCrash()&&isStart) {
+		//	this->score = 0;
+		//	isStart = false;
+		//	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
+		//	D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
+		//	m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
+		//	hr = m_pRenderTarget->EndDraw();
+		//	Sleep(3000);
+		//	TRACE(L"true");
+		//}*/
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
