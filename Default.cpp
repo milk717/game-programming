@@ -47,7 +47,7 @@ DemoApp::DemoApp() :
 	//경로기하
 	m_pPathGeometry(NULL),
 	m_pObjectGeometry(NULL),
-	m_pBackgroundGeometry(NULL),
+	m_pRedBoxGeometry(NULL),
 
 	//애니메이션
 	m_Animation()
@@ -83,7 +83,7 @@ DemoApp::~DemoApp()
 	//경로기하
 	SAFE_RELEASE(m_pPathGeometry);
 	SAFE_RELEASE(m_pObjectGeometry);
-	SAFE_RELEASE(m_pBackgroundGeometry);
+	SAFE_RELEASE(m_pRedBoxGeometry);
 }
 
 HRESULT DemoApp::Initialize()

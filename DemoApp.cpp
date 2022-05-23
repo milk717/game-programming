@@ -171,11 +171,11 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	// 배경 경로 기하를 생성함.
 	if (SUCCEEDED(hr))
 	{
-		hr = m_pD2DFactory->CreatePathGeometry(&m_pBackgroundGeometry);
+		hr = m_pD2DFactory->CreatePathGeometry(&m_pRedBoxGeometry);
 	}
 	if (SUCCEEDED(hr))
 	{
-		hr = m_pBackgroundGeometry->Open(&pSink);
+		hr = m_pRedBoxGeometry->Open(&pSink);
 	}
 	if (SUCCEEDED(hr))
 	{
@@ -219,7 +219,7 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
 		// 렌더타겟을 클리어함.
-		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::DarkSlateGray));
 
 
 		//배경 그리기
@@ -253,11 +253,12 @@ HRESULT DemoApp::OnRender()
 		//장애물 그리기
 		{
 			D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(OBJECT_START_X_POSITION, GROUND_Y_POSITION);
+
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
 			float length = m_Animation.GetValue(anim_time);
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-			m_pBackgroundGeometry->ComputePointAtLength(length, NULL, &point, NULL);
+			m_pRedBoxGeometry->ComputePointAtLength(length, NULL, &point, NULL);
 			// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 			D2D1_MATRIX_3X2_F objectMatrix = D2D1::Matrix3x2F(
 				1, 0,

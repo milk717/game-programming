@@ -55,7 +55,7 @@ private:
 	//경로기하
 	ID2D1PathGeometry* m_pPathGeometry;
 	ID2D1PathGeometry* m_pObjectGeometry;
-	ID2D1PathGeometry* m_pBackgroundGeometry;
+	ID2D1PathGeometry* m_pRedBoxGeometry;
 
 	//애니메이션
 	AnimationLinear<float> m_Animation;
@@ -87,10 +87,8 @@ private:
 	int score = 0;		//점수
 	bool isStart = false;
 	int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
-	FLOAT backgroundPosition = 1;
-	//D2D1_POINT_2F objectPoint;	//장애물의 좌표
-
-
+	int backgroundPosition = 1;
+	//D2D1_POINT_2F objectPoint{0,0};	//장애물의 좌표
 
 
 public:
