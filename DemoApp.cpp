@@ -27,7 +27,6 @@ bool isJumpClick = false;
 D2D1_POINT_2F charPoint = {30,400};
 double spaceTime;
 double temp = 0;	//좌표 임시저장
-double chx = 0;
 double chy = 0;
 double jump;
 
@@ -44,8 +43,8 @@ void DemoApp::WriteActionInfo()
 	D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
 
 	WCHAR szText[250];
-	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n장애물 위치 = %f\n캐릭터 좌표 = (%f, %f)",
-		currentMousePosition.x, currentMousePosition.y, temp, chx, chy);
+	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n장애물 위치 = %f\n캐릭터 좌표 = (0, %f)",
+		currentMousePosition.x, currentMousePosition.y, temp, chy);
 
 	m_pRenderTarget->DrawText(
 		szText,
@@ -286,19 +285,18 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 
 		//장애물 충돌했을 때
-		temp = point.x;
-		chx = 0;
+		temp = 944+point.x;
 		chy = jump;
-		///*if (isCrash()&&isStart) {
-		//	this->score = 0;
-		//	isStart = false;
-		//	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
-		//	D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
-		//	m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
-		//	hr = m_pRenderTarget->EndDraw();
-		//	Sleep(3000);
-		//	TRACE(L"true");
-		//}*/
+		if (isCrash()&&isStart) {
+			this->score = 0;
+			isStart = false;
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
+			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
+			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
+			hr = m_pRenderTarget->EndDraw();
+			Sleep(2000);
+			TRACE(L"true");
+		}
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
@@ -336,7 +334,7 @@ HRESULT DemoApp::OnRender()
 
 bool DemoApp::isCrash() {
 	//TRACE(L"object = %d\tcharactor = (%f, %f)\n",temp, chx, chy);
-	if (temp>=-670 && temp <= -590) { 
+	if (temp>=0 && temp <= 80) { 
 		//TRACE(L"temp\n");
 		if (330 <= chy && chy <= 400) {
 			//TRACE(L"chy\n");
