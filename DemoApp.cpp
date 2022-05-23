@@ -4,6 +4,11 @@
 #include <ctime>
 #include <cmath>
 
+#define GROUND_Y_POSITION 450	//바닥의 Y좌표
+#define OBJECT_START_X_POSITION 1000
+#define OBJECT_END_X_POSITION -100
+#define OBJECT_PATH_LENGTH -1100
+
 //디버깅용 함수
 #if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
 #define TRACE TRACE_WIN32
@@ -177,7 +182,7 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 		D2D1_POINT_2F currentLocation = { 0.0f, 0.0f };
 
 		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
-		pSink->AddLine(D2D1::Point2F(-944, 0));
+		pSink->AddLine(D2D1::Point2F(OBJECT_PATH_LENGTH, 0));
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
@@ -210,7 +215,7 @@ HRESULT DemoApp::OnRender()
 
 		D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
 
-		D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(rtSize.width /2, rtSize.height/2 );
+		D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(OBJECT_START_X_POSITION, GROUND_Y_POSITION);
 
 		// 그리기를 준비함.
 		m_pRenderTarget->BeginDraw();
@@ -221,8 +226,6 @@ HRESULT DemoApp::OnRender()
 		// 렌더타겟을 클리어함.
 		m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
-		ScoreCountStart();	//점수카운트하기
-		WriteActionInfo();	//info 출력
 
 		TRACE(L"%f\n", rtSize.width);
 		//배경 그리기
@@ -244,22 +247,26 @@ HRESULT DemoApp::OnRender()
 			);
 		}
 
+		ScoreCountStart();	//점수카운트하기
+		WriteActionInfo();	//info 출력
+
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
 		//장애물 그리기
 		float length = m_Animation.GetValue(anim_time);
 		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
-		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+		m_pBackgroundGeometry->ComputePointAtLength(length, NULL, &point, NULL);
 		// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 		triangleMatrix = D2D1::Matrix3x2F(
-			tangent.x, tangent.y,
-			-tangent.y, tangent.x,
+			0, 1,
+			-1, 0,
 			point.x, point.y);
 		//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
 		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 		// 사각형을 빨간색으로 그림.
 		m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
 
-		
+
 		//미니언 그리기 & 미니언 점프
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
@@ -282,7 +289,7 @@ HRESULT DemoApp::OnRender()
 			this->score = 0;
 			isStart = false;
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
-			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 1000, 1000);
+			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
 			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
 			hr = m_pRenderTarget->EndDraw();
 			Sleep(3000);
