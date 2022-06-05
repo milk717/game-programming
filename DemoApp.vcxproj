@@ -241,6 +241,7 @@
     <ClCompile Include="CustomFunction.cpp" />
     <ClCompile Include="Default.cpp" />
     <ClCompile Include="DemoApp.cpp" />
+    <ClCompile Include="Sound.cpp" />
     <ClCompile Include="SoundManager.cpp" />
   </ItemGroup>
   <ItemGroup>

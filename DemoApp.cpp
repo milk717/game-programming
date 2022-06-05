@@ -1,4 +1,5 @@
 #include "DemoApp.h"
+#include "SoundManager.h"
 
 #include <tchar.h>
 #include <ctime>
@@ -279,6 +280,8 @@ HRESULT DemoApp::OnRender()
 					D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
 					m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
 					hr = m_pRenderTarget->EndDraw();
+					soundManager->play(2, false);
+					soundManager->stop(1);
 					Sleep(2000);
 					TRACE(L"true");
 				}
@@ -307,6 +310,14 @@ HRESULT DemoApp::OnRender()
 		}
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
+
+		//게임 클리어
+		{
+			if(score == 100000)
+			{
+				
+			}
+		}
 
 
 		// 그리기 연산들을 제출함.
@@ -440,18 +451,22 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			case WM_KEYDOWN:
 			{
 				if (!(isStart)) {	//시작 안했을 경우 시작해줌
+					pDemoApp->soundManager->play(1, true);
 					spaceTime = clock();
 					startTime = clock();
 					isStart = true;
 					isJumpClick = true;
+					pDemoApp->soundManager->play(0, false);
 				}
 				else if (isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
 					spaceTime = clock();
 					isJumpClick = true;		//점프라고 표시
+					pDemoApp->soundManager->play(0, false);
 				}else if(isStart && score>50000 && isJumpClick && !isDoubleJump)	//시작했고, 이단점프 가능하고, 한번 점프한 상태에서
 				{
 					isDoubleJump = true;
 					spaceTime = clock();
+					pDemoApp->soundManager->play(0, false);
 				}
 			}
 
