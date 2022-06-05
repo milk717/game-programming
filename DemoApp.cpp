@@ -30,6 +30,7 @@ double temp = 0;	//좌표 임시저장
 double chy = 0;
 double jump;
 int backgroundPosition = 1;
+int objectPosition = 1;
 
 
 /* 현재 마우스 위치 좌표 */
@@ -53,7 +54,7 @@ void DemoApp::WriteActionInfo()
 		wcslen(szText),
 		m_pTextFormat,
 		D2D1::RectF(10.0f, 30.0f, 500.0f, 240.0f),
-		m_pRedBrush
+		m_pTextBrush
 	);
 
 	swprintf_s(szText, L"점수 : %05d", score/100);
@@ -160,7 +161,8 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 		D2D1_POINT_2F currentLocation = { 0.0f, 0.0f };
 
 		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_HOLLOW);
-		pSink->AddLine(D2D1::Point2F(OBJECT_PATH_LENGTH, 0));
+		pSink->AddLine(D2D1::Point2F(0, 100));
+		pSink->AddLine(D2D1::Point2F(0, 0));
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
@@ -228,11 +230,13 @@ HRESULT DemoApp::OnRender()
 		ScoreCountStart();	//점수카운트하기
 		WriteActionInfo();	//info 출력
 
-		//장애물 그리기
+		//새 그리기
 		{
-			D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(OBJECT_START_X_POSITION, GROUND_Y_POSITION);
+			D2D1_SIZE_F size = m_pBirdBitmap->GetSize();	//비트맵 사이즈 얻기
 
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+			D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(rtSize.width/2, -170);
+			D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(0.5f, 0.5f));
 
 			float length = m_Animation.GetValue(anim_time);
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
@@ -243,11 +247,23 @@ HRESULT DemoApp::OnRender()
 				0, 1,
 				point.x, point.y);
 			//TRACE(L"(x,y) = (%f, %f)\n", point.x, point.y);
-			m_pRenderTarget->SetTransform(objectMatrix * translation);
-			// 사각형을 빨간색으로 그림.
-			m_pRenderTarget->FillGeometry(m_pObjectGeometry, m_pRedBrush);
+			m_pRenderTarget->SetTransform(objectMatrix * translation * scale);
+			m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pBirdBitmapBrush);
 		}
 
+		//장애물 그리기
+		{
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+			float acceleration = Acceleration();
+
+			objectPosition = -(int)(this->score * acceleration) % 1100;
+
+
+			D2D1_RECT_F rectangle = D2D1::RectF(objectPosition + rtSize.width, 500, objectPosition + rtSize.width+100, 400);
+
+			m_pRenderTarget->FillRectangle(rectangle,m_pRedBrush);
+		}
 
 		//미니언 그리기 & 미니언 점프
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
