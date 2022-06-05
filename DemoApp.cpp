@@ -3,6 +3,7 @@
 #include <tchar.h>
 #include <ctime>
 #include <cmath>
+#include <cstdio>
 
 #define GROUND_Y_POSITION 400	//바닥의 Y좌표
 #define OBJECT_NUMBER 5
@@ -25,7 +26,6 @@ bool isJumpClick = false;
 D2D1_POINT_2F charPoint = {30,400};
 double spaceTime;
 double temp = 0;	//좌표 임시저장
-double chy = 0;
 double jump = 400;
 bool isDoubleJump = false;
 int backgroundPosition = 1;
@@ -47,7 +47,7 @@ void DemoApp::WriteActionInfo()
 
 	WCHAR szText[250];
 	swprintf_s(szText, L"마우스x : %1.f\n마우스y : %1.f\n장애물 위치 = %f\n캐릭터 좌표 = (0, %f)",
-		currentMousePosition.x, currentMousePosition.y, temp, chy);
+		currentMousePosition.x, currentMousePosition.y, temp, jump);
 
 	m_pRenderTarget->DrawText(
 		szText,
@@ -178,8 +178,6 @@ HRESULT DemoApp::OnRender()
 {
 	HRESULT hr;
 
-	//캐릭터 이동 애니메이션
-	static float char_animation_time = 0.0F;
 	static float anim_time = 0.0f;
 
 	hr = CreateDeviceResources();
@@ -187,7 +185,6 @@ HRESULT DemoApp::OnRender()
 	if (SUCCEEDED(hr))
 	{
 		D2D1_POINT_2F point;
-		D2D1_POINT_2F tangent;
 
 		D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
 
@@ -241,7 +238,6 @@ HRESULT DemoApp::OnRender()
 			float length = m_Animation.GetValue(anim_time);
 			// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
 			m_pRedBoxGeometry->ComputePointAtLength(length, NULL, &point, NULL);
-			// 사각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
 			D2D1_MATRIX_3X2_F objectMatrix = D2D1::Matrix3x2F(
 				1, 0,
 				0, 1,
@@ -271,7 +267,6 @@ HRESULT DemoApp::OnRender()
 				m_pRenderTarget->FillRectangle(rectangle, m_pRedBrush);
 				//장애물 캐릭터 충돌판정
 				temp = objectPosition + rtSize.width;
-				chy = jump;
 				if (isCrash() && isStart) {
 					this->score = 0;
 					isStart = false;
@@ -280,11 +275,10 @@ HRESULT DemoApp::OnRender()
 					m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
 					hr = m_pRenderTarget->EndDraw();
 					Sleep(2000);
-					TRACE(L"true");
+					TRACE("true");
 				}
 			}
-			TRACE(L"장애물 위치 = %f\n", objectPosition+rtSize.width);
-			//장애물 충돌했을 때
+			TRACE("장애물 위치 = %f\n", objectPosition+rtSize.width);
 		}
 
 		//미니언 그리기 & 미니언 점프
@@ -325,9 +319,6 @@ HRESULT DemoApp::OnRender()
 			anim_time = 0.0f;
 			//charAnimationTime = 0.0f;
 		}
-		else if (char_animation_time >= 1.47) {
-			char_animation_time = 0.0f;
-		}
 		else
 		{
 			LARGE_INTEGER CurrentTime;
@@ -337,7 +328,6 @@ HRESULT DemoApp::OnRender()
 			m_nPrevTime = CurrentTime;
 
 			anim_time += elapsedTime;
-			char_animation_time += elapsedTime;
 		}
 	}
 
@@ -348,7 +338,7 @@ bool DemoApp::isCrash() {
 	//TRACE(L"object = %d\tcharactor = (%f, %f)\n",temp, chx, chy);
 	if (temp>=0 && temp <= 80) { 
 		//TRACE(L"temp\n");
-		if (330 <= chy && chy <= 400) {
+		if (330 <= jump && jump <= 400) {
 			//TRACE(L"chy\n");
 			return true;
 		}
@@ -426,7 +416,6 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 					pDemoApp->startTime = clock();
 					pDemoApp->isStart = true;
 					isJumpClick = true;
-					
 				}
 				else if (pDemoApp->isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
 					spaceTime = clock();
