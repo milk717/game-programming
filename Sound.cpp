@@ -25,5 +25,7 @@ BOOL DemoApp::addSound(HWND hWnd) {
 		return FALSE;
 	if (!soundManager->add(L"./sound/gameover.wav", &id))
 		return FALSE;
+	if (!soundManager->add(L"./sound/clear.wav", &id))
+		return FALSE;
 	return true;
 }

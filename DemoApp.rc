@@ -20,6 +20,9 @@ background Image "resource\\background.png"
 charactor Image "resource\\charactor.png"
 gameover Image "resource\\gameover.png"
 bird Image "resource\\bird.png"
+gameclear Image "resource\\gameclear.png"
+restart Image "resource\\restart.png"
+
 
 
 

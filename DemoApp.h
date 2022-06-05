@@ -73,6 +73,9 @@ private:
 	ID2D1Bitmap* m_pCharactorBitmap;	//캐릭터 비트맵
 	ID2D1Bitmap* m_pGameoverBitmap;	//게임오버 비트맵
 	ID2D1Bitmap* m_pBirdBitmap;	//새 비트맵
+	ID2D1Bitmap* m_pGameclearBitmap;	//게임 클리어 비트맵
+	ID2D1Bitmap* m_pRestartBitmap;	//게임 클리어 비트맵
+
 
 	//비트맵 브러쉬
 	ID2D1BitmapBrush* m_pBackgroundBitmapBrush;
@@ -90,7 +93,6 @@ private:
 	BOOL SetVolume(LPDIRECTSOUNDBUFFER lpDSBuffer, LONG lVolume);
 	BOOL addSound(HWND hWnd);
 	CSoundManager* soundManager;
-
 
 public:
 	void WriteActionInfo();

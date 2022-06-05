@@ -32,6 +32,8 @@ DemoApp::DemoApp() :
 	m_pCharactorBitmap(NULL),
 	m_pGameoverBitmap(NULL),
 	m_pBirdBitmap(NULL),
+	m_pGameclearBitmap(NULL),
+
 
 	//비트맵 브러쉬
 	m_pBackgroundBitmapBrush(NULL),
@@ -80,6 +82,8 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pCharactorBitmap);
 	SAFE_RELEASE(m_pGameoverBitmap);
 	SAFE_RELEASE(m_pBirdBitmap);
+	SAFE_RELEASE(m_pGameclearBitmap);
+
 
 
 	//경로기하

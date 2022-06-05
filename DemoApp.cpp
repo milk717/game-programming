@@ -35,7 +35,7 @@ double jump = 400;
 bool isDoubleJump = false;
 int backgroundPosition = 1;
 int objectPosition=1;
-int objectRandom[OBJECT_NUMBER] = { 3000,9000,5000,7000,2000 };
+int objectRandom[OBJECT_NUMBER] = { 3000,9000,5000,7000,10000 };
 int objectRandom2[OBJECT_NUMBER] = { 6000,9000,5000,7000,13000 };
 
 
@@ -313,8 +313,23 @@ HRESULT DemoApp::OnRender()
 
 		//게임 클리어
 		{
-			if(score == 100000)
+			if(score > 100000)
 			{
+				m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+				D2D1_SIZE_F size = m_pGameclearBitmap->GetSize();	//비트맵 사이즈 얻기
+				soundManager->stop(1);
+				soundManager->play(3, false);
+				isStart = false;
+				score = 0;
+				m_pRenderTarget->DrawBitmap(
+					m_pGameclearBitmap,
+					D2D1::RectF(
+						0, 0,
+						size.width, size.height
+					)
+				);
+				hr = m_pRenderTarget->EndDraw();
+				Sleep(5000);
 				
 			}
 		}

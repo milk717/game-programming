@@ -39,6 +39,12 @@ HRESULT DemoApp::CreateDeviceResources()
 		if (SUCCEEDED(hr)) {
 			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"bird", L"Image", size.width, size.height, &m_pBirdBitmap);
 		}
+		if (SUCCEEDED(hr)) {
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"gameclear", L"Image", size.width, size.height, &m_pGameclearBitmap);
+		}
+		if (SUCCEEDED(hr)) {
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"restart", L"Image", size.width, size.height, &m_pRestartBitmap);
+		}
 
 		/*
 		* 비트맵 브러쉬 생성
