@@ -5,9 +5,7 @@
 #include <cmath>
 
 #define GROUND_Y_POSITION 400	//바닥의 Y좌표
-#define OBJECT_START_X_POSITION 1000
-#define OBJECT_END_X_POSITION -100
-#define OBJECT_PATH_LENGTH -1100
+#define OBJECT_NUMBER 5
 
 //디버깅용 함수
 #if defined(_DEBUG)&&defined(WIN32)&&!defined(_AFX)&&!defined(_AFXDLL)
@@ -28,10 +26,12 @@ D2D1_POINT_2F charPoint = {30,400};
 double spaceTime;
 double temp = 0;	//좌표 임시저장
 double chy = 0;
-double jump;
+double jump = 400;
+bool isDoubleJump = false;
 int backgroundPosition = 1;
-int objectPosition = 1;
-
+int objectPosition=1;
+int objectRandom[OBJECT_NUMBER] = { 3000,9000,5000,7000,2000 };
+int objectRandom2[OBJECT_NUMBER] = { 6000,9000,5000,7000,13000 };
 
 /* 현재 마우스 위치 좌표 */
 D2D_POINT_2F currentMousePosition;
@@ -57,7 +57,7 @@ void DemoApp::WriteActionInfo()
 		m_pTextBrush
 	);
 
-	swprintf_s(szText, L"점수 : %05d", score/100);
+	swprintf_s(szText, L"점수 : %05d", score/10);
 
 	m_pRenderTarget->DrawText(
 		szText,
@@ -205,11 +205,11 @@ HRESULT DemoApp::OnRender()
 		//배경 그리기
 		{
 			float acceleration = Acceleration();
-			TRACE(L"가속도 = %f\n", acceleration);
+			//TRACE(L"가속도 = %f\n", acceleration);
 
 			backgroundPosition = -(int)(this->score*acceleration)%944;
 
-			TRACE(L"배경 위치 = %f\n", backgroundPosition);
+			//TRACE(L"배경 위치 = %f\n", backgroundPosition);
 
 			m_pRenderTarget->DrawBitmap(
 				m_pBitmap,
@@ -257,21 +257,51 @@ HRESULT DemoApp::OnRender()
 
 			float acceleration = Acceleration();
 
-			objectPosition = -(int)(this->score * acceleration) % 1100;
+			for(int i = 0; i< OBJECT_NUMBER; i++)
+			{
+				if(score<50000)
+				{
+					objectPosition = -(int)(this->score * acceleration) % objectRandom[i];
 
-
-			D2D1_RECT_F rectangle = D2D1::RectF(objectPosition + rtSize.width, 500, objectPosition + rtSize.width+100, 400);
-
-			m_pRenderTarget->FillRectangle(rectangle,m_pRedBrush);
+				}else
+				{
+					objectPosition = -(int)(this->score * acceleration) % objectRandom2[i];
+				}
+				D2D1_RECT_F rectangle = D2D1::RectF(objectPosition + rtSize.width, 500, objectPosition + rtSize.width + 100, 400);
+				m_pRenderTarget->FillRectangle(rectangle, m_pRedBrush);
+				//장애물 캐릭터 충돌판정
+				temp = objectPosition + rtSize.width;
+				chy = jump;
+				if (isCrash() && isStart) {
+					this->score = 0;
+					isStart = false;
+					m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
+					D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
+					m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
+					hr = m_pRenderTarget->EndDraw();
+					Sleep(2000);
+					TRACE(L"true");
+				}
+			}
+			TRACE(L"장애물 위치 = %f\n", objectPosition+rtSize.width);
+			//장애물 충돌했을 때
 		}
 
 		//미니언 그리기 & 미니언 점프
 		D2D1_SIZE_F size = m_pCharactorBitmap->GetSize();	//비트맵 사이즈 얻기
 		D2D1_POINT_2F leftGround = D2D1::Point2F(0.f, 400);
 		if (isJumpClick) {
-			jump = 100 + std::abs(300 - (clock() - spaceTime) * 0.5);
+			if(score > 50000)
+			{
+				jump = 100 + std::pow(300 - (clock() - spaceTime), 2) * 0.0009;
+			}else
+			{
+				jump = 100 + std::pow(300 - (clock() - spaceTime), 2) * 0.0005;
+			}
 			if (jump > 400) {
 				jump = 400;
+				isJumpClick = false;
+				isDoubleJump = false;
 			}
 			leftGround = D2D1::Point2F(0.f, jump);
 			//TRACE(L"%f\n", jump);
@@ -279,22 +309,9 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(leftGround.x, leftGround.y));
 		m_pRenderTarget->FillRectangle(&D2D1::RectF(0, 0, size.width, size.height), m_pCharactorBitmapBrush);
 
-		//장애물 충돌했을 때
-		temp = 944+point.x;
-		chy = jump;
-		if (isCrash()&&isStart) {
-			this->score = 0;
-			isStart = false;
-			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
-			D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
-			m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
-			hr = m_pRenderTarget->EndDraw();
-			Sleep(2000);
-			TRACE(L"true");
-		}
 
 		// 그리기 연산들을 제출함.
-		hr = m_pRenderTarget->EndDraw();
+ 		hr = m_pRenderTarget->EndDraw();
 
 		if (hr == D2DERR_RECREATE_TARGET)
 		{
@@ -404,14 +421,20 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			case WM_KEYDOWN:
 			{
-				spaceTime = clock();
 				if (!(pDemoApp->isStart)) {	//시작 안했을 경우 시작해줌
+					spaceTime = clock();
 					pDemoApp->startTime = clock();
 					pDemoApp->isStart = true;
 					isJumpClick = true;
+					
 				}
 				else if (pDemoApp->isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
+					spaceTime = clock();
 					isJumpClick = true;		//점프라고 표시
+				}else if(pDemoApp->isStart && pDemoApp->score>50000 && isJumpClick && !isDoubleJump)	//시작했고, 이단점프 가능하고, 한번 점프한 상태에서
+				{
+					isDoubleJump = true;
+					spaceTime = clock();
 				}
 			}
 
