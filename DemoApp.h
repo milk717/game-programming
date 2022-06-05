@@ -90,7 +90,7 @@ private:
 	int backgroundPosition = 1;
 
 	//장애물 위치
-	int redBox_x = 1100;
+	//int redBox_x = 1100;
 
 
 public:

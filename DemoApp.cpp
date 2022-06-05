@@ -4,7 +4,7 @@
 #include <ctime>
 #include <cmath>
 
-#define GROUND_Y_POSITION 450	//¹Ù´ÚÀÇ YÁÂÇ¥
+#define GROUND_Y_POSITION 400	//¹Ù´ÚÀÇ YÁÂÇ¥
 #define OBJECT_START_X_POSITION 1000
 #define OBJECT_END_X_POSITION -100
 #define OBJECT_PATH_LENGTH -1100
@@ -156,10 +156,10 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	}
 	if (SUCCEEDED(hr))
 	{
-		pSink->BeginFigure(D2D1::Point2F(-25.0f, -50.0f), D2D1_FIGURE_BEGIN_FILLED);
+		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
 
-		const D2D1_POINT_2F ptTriangle[] = { {-50.0f, -50.0f}, {-50.0f, 50.0f}, {50.0f, 50.0f},  {50.0f, -50.0f} };
-		pSink->AddLines(ptTriangle, 4);
+		const D2D1_POINT_2F ptObject[] = { {100.0f, 0.0f}, {100.0f, 100.0f}, {0.0f, 100.0f},  {0.0f, 0.0f} };
+		pSink->AddLines(ptObject, 4);
 
 		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
 
