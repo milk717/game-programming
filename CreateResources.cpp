@@ -19,11 +19,6 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pRedBrush);
 		}
-		// 노란색 붓을 생성함.
-		if (SUCCEEDED(hr))
-		{
-			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &m_pYellowBrush);
-		}
 		// 흰색 붓을 생성함.
 		if (SUCCEEDED(hr)) {
 			hr = m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pTextBrush);
@@ -41,6 +36,9 @@ HRESULT DemoApp::CreateDeviceResources()
 		if (SUCCEEDED(hr)) {
 			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"gameover", L"Image", size.width, size.height, &m_pGameoverBitmap);
 		}
+		if (SUCCEEDED(hr)) {
+			hr = LoadBitmapFromResource(m_pRenderTarget, m_pWICFactory, L"bird", L"Image", size.width, size.height, &m_pBirdBitmap);
+		}
 
 		/*
 		* 비트맵 브러쉬 생성
@@ -57,6 +55,10 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = m_pRenderTarget->CreateBitmapBrush(m_pCharactorBitmap, &m_pCharactorBitmapBrush);
 		}
+		if (SUCCEEDED(hr))
+		{
+			hr = m_pRenderTarget->CreateBitmapBrush(m_pBirdBitmap, &m_pBirdBitmapBrush);
+		}
 	}
 
 	return hr;
@@ -66,7 +68,7 @@ void DemoApp::DiscardDeviceResources()
 {
 	SAFE_RELEASE(m_pRenderTarget);
 	SAFE_RELEASE(m_pRedBrush);
-	SAFE_RELEASE(m_pYellowBrush);
 	SAFE_RELEASE(m_pBitmap);
 	SAFE_RELEASE(m_pCharactorBitmap);
+	SAFE_RELEASE(m_pBirdBitmapBrush);
 }

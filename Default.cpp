@@ -26,17 +26,18 @@ DemoApp::DemoApp() :
 	m_pWICFactory(NULL),
 
 	m_pRedBrush(NULL),
-	m_pYellowBrush(NULL),
 
 	//비트맵
 	m_pBitmap(NULL),
 	m_pCharactorBitmap(NULL),
 	m_pGameoverBitmap(NULL),
+	m_pBirdBitmap(NULL),
 
 	//비트맵 브러쉬
 	m_pBackgroundBitmapBrush(NULL),
 	m_pGameoverBitmapBrush(NULL),
 	m_pCharactorBitmapBrush(NULL),
+	m_pBirdBitmapBrush(NULL),
 
 	// Text
 	m_pDWriteFactory(NULL),
@@ -45,7 +46,6 @@ DemoApp::DemoApp() :
 	m_score_TextFormat(NULL),
 
 	//경로기하
-	m_pPathGeometry(NULL),
 	m_pObjectGeometry(NULL),
 	m_pRedBoxGeometry(NULL),
 
@@ -60,7 +60,6 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pWICFactory);
 	SAFE_RELEASE(m_pRenderTarget);
 	SAFE_RELEASE(m_pRedBrush);
-	SAFE_RELEASE(m_pYellowBrush);
 
 	SAFE_RELEASE(m_pBitmap);
 
@@ -68,6 +67,7 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pGameoverBitmapBrush);
 	SAFE_RELEASE(m_pCharactorBitmapBrush);
 	SAFE_RELEASE(m_pBackgroundBitmapBrush);
+	SAFE_RELEASE(m_pBirdBitmapBrush);
 
 	// Text
 	SAFE_RELEASE(m_pDWriteFactory);
@@ -79,9 +79,10 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pBitmap);
 	SAFE_RELEASE(m_pCharactorBitmap);
 	SAFE_RELEASE(m_pGameoverBitmap);
+	SAFE_RELEASE(m_pBirdBitmap);
+
 
 	//경로기하
-	SAFE_RELEASE(m_pPathGeometry);
 	SAFE_RELEASE(m_pObjectGeometry);
 	SAFE_RELEASE(m_pRedBoxGeometry);
 }
@@ -113,7 +114,7 @@ HRESULT DemoApp::Initialize()
 		if (SUCCEEDED(hr))
 		{
 			float length = 0;
-			hr = m_pPathGeometry->ComputeLength(NULL, &length);
+			hr = m_pRedBoxGeometry->ComputeLength(NULL, &length);
 
 			if (SUCCEEDED(hr))
 			{

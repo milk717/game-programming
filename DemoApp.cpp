@@ -121,29 +121,6 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 		);
 	}
 
-	// 선형 모양의 경로 기하를 생성함.
-	if (SUCCEEDED(hr))
-	{
-		hr = m_pD2DFactory->CreatePathGeometry(&m_pPathGeometry);
-	}
-	if (SUCCEEDED(hr))
-	{
-		hr = m_pPathGeometry->Open(&pSink);
-	}
-	if (SUCCEEDED(hr))
-	{
-		D2D1_POINT_2F currentLocation = { 960, 170 };
-
-		pSink->BeginFigure(currentLocation, D2D1_FIGURE_BEGIN_FILLED);
-
-		pSink->AddLine({ 960, 170.0F });
-
-		pSink->AddLine({ -960,170.0F });
-
-		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
-
-		hr = pSink->Close();
-	}
 
 	SAFE_RELEASE(pSink);
 
