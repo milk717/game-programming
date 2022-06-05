@@ -87,10 +87,7 @@ private:
 	int score = 0;		//점수
 	bool isStart = false;
 	int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
-	int backgroundPosition = 1;
 
-	//장애물 위치
-	//int redBox_x = 1100;
 
 
 public:

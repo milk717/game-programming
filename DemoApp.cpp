@@ -29,6 +29,8 @@ double spaceTime;
 double temp = 0;	//좌표 임시저장
 double chy = 0;
 double jump;
+int backgroundPosition = 1;
+
 
 /* 현재 마우스 위치 좌표 */
 D2D_POINT_2F currentMousePosition;
