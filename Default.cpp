@@ -127,7 +127,14 @@ HRESULT DemoApp::Initialize()
 			}
 		}
 	}
-
+	//if (SUCCEEDED(hr))
+	//{
+	//	// sound
+	//	addSound(m_hwnd);
+	//	//soundManager->pDSBPrimary->SetVolume(vol);
+	//	soundManager->play(0, TRUE); soundManager->play(1, TRUE); soundManager->play(2, TRUE); soundManager->play(3, TRUE); // background
+	//	SetVolume(soundManager->pDSBPrimary, 90);
+	//}
 	QueryPerformanceFrequency(&m_nFrequency);
 	QueryPerformanceCounter(&m_nPrevTime);
 

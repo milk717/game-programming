@@ -22,6 +22,10 @@ void TRACE_WIN32(LPCTSTR lpszFormat, ...) {
 }
 #endif
 
+//게임정보 저장 변수
+int score = 0;		//점수
+bool isStart = false;
+int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
 bool isJumpClick = false;
 D2D1_POINT_2F charPoint = {30,400};
 double spaceTime;
@@ -32,6 +36,7 @@ int backgroundPosition = 1;
 int objectPosition=1;
 int objectRandom[OBJECT_NUMBER] = { 3000,9000,5000,7000,2000 };
 int objectRandom2[OBJECT_NUMBER] = { 6000,9000,5000,7000,13000 };
+
 
 /* 현재 마우스 위치 좌표 */
 D2D_POINT_2F currentMousePosition;
@@ -204,7 +209,7 @@ HRESULT DemoApp::OnRender()
 			float acceleration = Acceleration();
 			//TRACE(L"가속도 = %f\n", acceleration);
 
-			backgroundPosition = -(int)(this->score*acceleration)%944;
+			backgroundPosition = -(int)(score*acceleration)%944;
 
 			//TRACE(L"배경 위치 = %f\n", backgroundPosition);
 
@@ -257,28 +262,28 @@ HRESULT DemoApp::OnRender()
 			{
 				if(score<50000)
 				{
-					objectPosition = -(int)(this->score * acceleration) % objectRandom[i];
+					objectPosition = -(int)(score * acceleration) % objectRandom[i];
 
 				}else
 				{
-					objectPosition = -(int)(this->score * acceleration) % objectRandom2[i];
+					objectPosition = -(int)(score * acceleration) % objectRandom2[i];
 				}
 				D2D1_RECT_F rectangle = D2D1::RectF(objectPosition + rtSize.width, 500, objectPosition + rtSize.width + 100, 400);
 				m_pRenderTarget->FillRectangle(rectangle, m_pRedBrush);
 				//장애물 캐릭터 충돌판정
 				temp = objectPosition + rtSize.width;
 				if (isCrash() && isStart) {
-					this->score = 0;
+					score = 0;
 					isStart = false;
 					m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(0, 0));
 					D2D1_RECT_F rcBrushRect = D2D1::RectF(0, 0, 944, 1000);
 					m_pRenderTarget->FillRectangle(rcBrushRect, m_pGameoverBitmapBrush);
 					hr = m_pRenderTarget->EndDraw();
 					Sleep(2000);
-					TRACE("true");
+					TRACE(L"true");
 				}
 			}
-			TRACE("장애물 위치 = %f\n", objectPosition+rtSize.width);
+			TRACE(L"장애물 위치 = %f\n", objectPosition+rtSize.width);
 		}
 
 		//미니언 그리기 & 미니언 점프
@@ -346,6 +351,20 @@ bool DemoApp::isCrash() {
 	return false;
 }
 
+//점수 카운트하는 함수
+void DemoApp::ScoreCountStart()
+{
+	if (isStart)
+	{
+		score = (clock() - startTime);
+	}
+}
+
+float DemoApp::Acceleration()
+{
+	return 0.5 + score * 0.000005;		//점수가 높아질수록 가속도 증가
+}
+
 void DemoApp::OnResize(UINT width, UINT height)
 { 
 	if (m_pRenderTarget)
@@ -390,7 +409,16 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			result = 0;
 			wasHandled = true;
 			break;
-
+			// 윈도우 창 크기 변환 막기
+			case WM_GETMINMAXINFO:
+			{
+				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+				mmi->ptMinTrackSize.x = 960;
+				mmi->ptMinTrackSize.y = 720;
+				mmi->ptMaxTrackSize.x = 960;
+				mmi->ptMaxTrackSize.y = 720;
+			}
+			break;
 			case WM_DISPLAYCHANGE:
 			{
 				InvalidateRect(hwnd, NULL, FALSE);
@@ -411,16 +439,16 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			case WM_KEYDOWN:
 			{
-				if (!(pDemoApp->isStart)) {	//시작 안했을 경우 시작해줌
+				if (!(isStart)) {	//시작 안했을 경우 시작해줌
 					spaceTime = clock();
-					pDemoApp->startTime = clock();
-					pDemoApp->isStart = true;
+					startTime = clock();
+					isStart = true;
 					isJumpClick = true;
 				}
-				else if (pDemoApp->isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
+				else if (isStart && !isJumpClick) {	//시작했고 점프 안한 상태에서 키 눌렸을 때
 					spaceTime = clock();
 					isJumpClick = true;		//점프라고 표시
-				}else if(pDemoApp->isStart && pDemoApp->score>50000 && isJumpClick && !isDoubleJump)	//시작했고, 이단점프 가능하고, 한번 점프한 상태에서
+				}else if(isStart && score>50000 && isJumpClick && !isDoubleJump)	//시작했고, 이단점프 가능하고, 한번 점프한 상태에서
 				{
 					isDoubleJump = true;
 					spaceTime = clock();

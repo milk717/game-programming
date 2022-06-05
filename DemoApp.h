@@ -17,6 +17,8 @@
 #include <dwmapi.h>
 
 #include "Animation.h"
+#include "SoundManager.h"
+
 
 // 자원 안전 반환 매크로.
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
@@ -83,11 +85,11 @@ private:
 	IDWriteTextFormat* m_pTextFormat;
 	IDWriteTextFormat* m_score_TextFormat;
 
-	//게임정보 저장 변수
-	int score = 0;		//점수
-	bool isStart = false;
-	int startTime = 0;		//스페이스 눌렸을 때 게임 시작한 시간을 저장하는 변수
-
+	//sound관련
+	void soundOn(DemoApp* pDemoApp, int i, bool trueorfalse);
+	BOOL SetVolume(LPDIRECTSOUNDBUFFER lpDSBuffer, LONG lVolume);
+	BOOL addSound(HWND hWnd);
+	CSoundManager* soundManager;
 
 
 public:
